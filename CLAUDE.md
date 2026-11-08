@@ -35,7 +35,7 @@ authoritative framework knowledge is at:
 ## This repo
 
 - Package: `haybale_stream` under `barn/haybale-stream/` (name `haybale-stream-dev` in dev).
-- `marketstall.toml` — the published library feed manifest; updated by `haywire share --save`.
+- `marketstall.toml` — the published library feed manifest; rewritten by `haywire share`; never hand-edited.
 - Setup, running, and sharing commands are in [README.md](README.md) — don't duplicate them here.
 
 ## Rules that carry over from the framework
@@ -47,3 +47,19 @@ These apply when editing this library; the long-form versions live in the monore
   alternate registration paths. Confirm before any change to class hierarchies or DI wiring.
 - After multi-file changes, run `uv run pytest` (from the monorepo, against the live
   framework) and confirm it passes before calling work done.
+
+## Releases
+
+- Never edit version numbers, `install_spec` or `marketstall.toml` by hand, and never
+  tag or push a release manually.
+- Release only with `uv run haywire share --bump patch|minor|major` (or an explicit `X.Y.Z`),
+  run **from this repo's root**, not from `../haywire-repo`: the CLI publishes the project in
+  the current directory. It bumps every `barn/*` library in lockstep, regenerates docs,
+  rebuilds `marketstall.toml`, then commits, tags `v<version>` and pushes to `origin` itself.
+  `--dry-run` reports what it would do and writes nothing.
+- It needs a clean working tree, an `origin` remote, push credentials, and the default
+  branch checked out. `distribute = "pypi"` is set here, so the marketstall rows pin
+  `haybale-stream==<version>`; the PyPI upload is a separate step (`publish-to-pypi.md`).
+- Before releasing, read `../haywire-repo/docs/guides/sharing-libraries.md` (and
+  `docs/architecture/sharing/share-pipeline-arch.md` if needed).
+- If a dependency pin needs a version that is not released yet, stop and ask.
