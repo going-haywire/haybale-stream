@@ -48,13 +48,13 @@ Develop from `../haywire-repo` (this package is symlinked into its `barn/`); see
 Run from this repo's root (not from `../haywire-repo`):
 
 ```shell
-uv run haywire share --bump patch|minor|major   # or an explicit X.Y.Z
-uv run haywire share --dry-run                  # report only, writes nothing
+uv run --frozen haywire share --dry-run                  # first: report only, writes nothing
+uv run --frozen haywire share --bump patch|minor|major   # or an explicit X.Y.Z
 ```
 
 This bumps every `barn/*` library in lockstep, regenerates docs and `marketstall.toml`,
 then commits, tags `v<version>` and pushes to `origin` itself. It needs a clean working tree
-and the default branch checked out. The project uses `distribute = "pypi"`, so uploading the
+and the default branch checked out (`--frozen` keeps `uv.lock` from being re-locked; `git checkout uv.lock` first if it is dirty). The project uses `distribute = "pypi"`, so uploading the
 package to PyPI is a separate step (see `publish-to-pypi.md` in the haywire docs).
 
 ## Credits

@@ -52,11 +52,13 @@ These apply when editing this library; the long-form versions live in the monore
 
 - Never edit version numbers, `install_spec` or `marketstall.toml` by hand, and never
   tag or push a release manually.
-- Release only with `uv run haywire share --bump patch|minor|major` (or an explicit `X.Y.Z`),
+- Release only with `uv run --frozen haywire share --bump patch|minor|major` (or an explicit `X.Y.Z`),
   run **from this repo's root**, not from `../haywire-repo`: the CLI publishes the project in
   the current directory. It bumps every `barn/*` library in lockstep, regenerates docs,
   rebuilds `marketstall.toml`, then commits, tags `v<version>` and pushes to `origin` itself.
-  `--dry-run` reports what it would do and writes nothing.
+  `--dry-run` reports what it would do and writes nothing; run it first.
+- `--frozen` matters: plain `uv run` re-locks and dirties `uv.lock`, which fails the clean-tree
+  check. If `uv.lock` is already dirty, `git checkout uv.lock` before releasing.
 - It needs a clean working tree, an `origin` remote, push credentials, and the default
   branch checked out. `distribute = "pypi"` is set here, so the marketstall rows pin
   `haybale-stream==<version>`; the PyPI upload is a separate step (`publish-to-pypi.md`).
