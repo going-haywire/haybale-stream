@@ -120,3 +120,84 @@ def test_receive_without_source_returns_none(library_system):
     node = _build(ReceiveFrameNode)
     node.out = lambda *a: pytest.fail("no frame expected")
     assert node.worker(None) == "none"
+
+
+def test_emit_and_event_port_layout(library_system):
+    from haybale_stream.nodes import FrameEventNode, ReceiveFrameEmitNode
+
+    emit = _build(ReceiveFrameEmitNode)
+    assert {"start", "stop", "callbacks", "started", "stopped"} <= set(emit.ports)
+    event = _build(FrameEventNode)
+    assert set(event.ports) >= {"listen_callback", "frame_ready", "image", "timestamp", "frame_number"}
+
+
+def test_library_registers_emit_nodes(library_system):
+    from haywire.core.node.registry import NodeRegistry
+
+    registry = library_system.injector.get(NodeRegistry)
+    for name in ("ReceiveFrameEmitNode", "FrameEventNode"):
+        assert registry.get(f"haybale-stream:node:{name}") is not None
+
+
+def test_frame_event_unpacks_payload(library_system):
+    from types import SimpleNamespace
+
+    from haybale_stream.backends.base import Frame
+    from haybale_stream.nodes import FrameEventNode
+
+    node = _build(FrameEventNode)
+    got = {}
+    node.out = lambda port, value: got.__setitem__(port, value)
+    pixels = np.zeros((8, 16, 4), np.uint8)
+    pixels[..., 0] = 200
+    payload = {"frame": Frame(pixels), "backend": "ndi", "frame_number": 3, "timestamp": 1.5}
+    ctx = SimpleNamespace(trigger=SimpleNamespace(payload=payload))
+    assert node.worker(ctx) == "frame_ready"
+    assert (got["image"].width, got["image"].height) == (16, 8)
+    assert got["frame_number"] == 3 and got["timestamp"] == 1.5
+    assert node.worker(SimpleNamespace(trigger=None)) is None
+
+
+@pytest.mark.network
+@pytest.mark.integration
+def test_emit_node_delivers_frames_to_subscribers(library_system):
+    from types import SimpleNamespace
+
+    from haybale_stream.backends import get_backend
+    from haybale_stream.nodes import ReceiveFrameEmitNode, SendFrameNode
+
+    backend = "ndi"
+    if not get_backend(backend).is_available():
+        pytest.skip("backend unavailable")
+    name = f"hbemit-{uuid.uuid4().hex[:8]}"
+    send = _build(SendFrameNode)
+    send.stream.backend = backend
+    send.stream.name = name
+    emit = _build(ReceiveFrameEmitNode)
+    emit.stream.backend = backend
+    emit.value = lambda port: {"a": "listener-1"} if port == "callbacks" else None
+    emitted = []
+    context = SimpleNamespace(
+        control_pin="start", emit_callback=lambda event_name, payload: emitted.append((event_name, payload))
+    )
+    image = _solid(32, 24, (10, 200, 10))
+    try:
+        send.worker(None, image)
+        sources = []
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline and not sources:
+            sources = [s for s in get_backend(backend).discover(wait=1.0) if name in s]
+        assert sources
+        emit.stream.source = sources[0]
+        assert emit.worker(context) == "started"
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline and not emitted:
+            send.worker(None, image)
+            time.sleep(0.05)
+        assert emitted and emitted[0][0] == "listener-1"
+        assert emitted[0][1]["frame"].width == 32
+        context.control_pin = "stop"
+        assert emit.worker(context) == "stopped"
+    finally:
+        send.on_teardown()
+        emit.on_teardown()
