@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-
 from haybale_image.value import ChannelOrder, ImageValue, Layout, convert_layout
 
 from .base import Backend, Frame

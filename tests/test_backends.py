@@ -5,7 +5,6 @@ import uuid
 
 import numpy as np
 import pytest
-
 from haybale_stream.backends import BACKENDS, BackendUnavailable, available_backends, get_backend
 
 pytestmark = [pytest.mark.unit]

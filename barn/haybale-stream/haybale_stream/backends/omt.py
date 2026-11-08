@@ -38,7 +38,7 @@ class OMTReceiver(Receiver):
         super().__init__(source)
         self._receiver = None
 
-    def open(self) -> None:
+    def open(self, timeout: float = 5.0) -> None:
         import cyomtlib as omt
 
         self._receiver = omt.Receiver(

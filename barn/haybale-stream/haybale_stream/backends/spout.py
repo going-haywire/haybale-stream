@@ -48,7 +48,7 @@ class SpoutReceiver(Receiver):
         self._buffer: bytearray | None = None
         self._size = (0, 0)
 
-    def open(self) -> None:
+    def open(self, timeout: float = 5.0) -> None:
         import SpoutGL
 
         self._receiver = SpoutGL.SpoutReceiver()

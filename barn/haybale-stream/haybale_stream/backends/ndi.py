@@ -61,7 +61,7 @@ class NDIReceiver(Receiver):
         self._video = None
         self._last_ts: float | None = None
 
-    def open(self) -> None:
+    def open(self, timeout: float = 5.0) -> None:
         from cyndilib.finder import Finder
         from cyndilib.receiver import Receiver as NativeReceiver
         from cyndilib.video_frame import VideoFrameSync
@@ -70,14 +70,18 @@ class NDIReceiver(Receiver):
         finder = Finder()
         finder.open()
         try:
-            deadline = time.monotonic() + 5.0
+            deadline = time.monotonic() + timeout
             found = None
-            while found is None and time.monotonic() < deadline:
+            while found is None:
                 finder.wait_for_sources(0.5)
                 found = next((s for s in finder if s.name == self.source), None)
+                if time.monotonic() >= deadline:
+                    break
             if found is None:
                 raise LookupError(f"NDI source {self.source!r} not found")
-            receiver = NativeReceiver(color_format=RecvColorFormat.RGBX_RGBA, bandwidth=RecvBandwidth.highest)
+            receiver = NativeReceiver(
+                color_format=RecvColorFormat.RGBX_RGBA, bandwidth=RecvBandwidth.highest
+            )
             video = VideoFrameSync()
             receiver.frame_sync.set_video_frame(video)
             receiver.set_source(found)

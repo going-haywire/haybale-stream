@@ -10,7 +10,9 @@ from .syphon import SyphonBackend
 
 #: Every backend by key, in menu order. Importing this is safe on any platform: native
 #: dependencies are imported only when a sender, receiver or discovery is actually used.
-BACKENDS: dict[str, type[Backend]] = {b.key: b for b in (NDIBackend, OMTBackend, SyphonBackend, SpoutBackend)}
+BACKENDS: dict[str, type[Backend]] = {
+    b.key: b for b in (NDIBackend, OMTBackend, SyphonBackend, SpoutBackend)
+}
 
 
 def get_backend(key: str) -> type[Backend]:

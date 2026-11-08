@@ -15,7 +15,17 @@ Ideas and backend code come from [TextureSharing](https://github.com/maybites/Te
 | Syphon  |       | yes   |         |
 | Spout   |       |       | yes     |
 
-Frames travel as `IMAGE` values from `haybale-image`. See [docs/design.md](docs/design.md).
+Frames travel as `IMAGE` values from `haybale-image`. See [docs/design.md](https://github.com/going-haywire/haybale-stream/blob/main/docs/design.md).
+
+## Nodes
+
+| Node | What it does |
+|------|--------------|
+| Send Frame | Publishes an `IMAGE` under a name on NDI, OMT, Syphon or Spout. |
+| Receive Frame | Fetches the newest frame from a named source as `IMAGE_RGBA`; exits through `Frame` or `No frame`. |
+
+Status: NDI and OMT are tested on Linux. Syphon and Spout are implemented but not yet run
+on macOS / Windows.
 
 ## Subscribe
 
@@ -42,6 +52,6 @@ uv run haywire share --bump patch|minor|major --save
 
 Syphon: Tom Butterworth and Anton Marini. Spout: Lynn Jarvis. SpoutGL: Jason Lai.
 syphon-python: Florian Bruggisser. cyndilib: Matthew Reid. OMT: the Open Media Transport project
-(cyomtlib wrapper). NDI is a trademark of Vizrt NDI AB.
+(cyomtlib wrapper). NDI® is a registered trademark of Vizrt NDI AB; NDI runtime © Vizrt NDI AB, bundled in the cyndilib wheel under the NDI SDK license (http://ndi.link/ndisdk_license).
 
 Martin Froehlich. Implementation for [haywire](https://github.com/going-haywire/haywire)

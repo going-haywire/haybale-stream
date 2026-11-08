@@ -708,26 +708,22 @@ source = { editable = "barn/haybale-stream" }
 dependencies = [
     { name = "cyndilib" },
     { name = "cyomtlib" },
-    { name = "haybale-core" },
     { name = "haybale-image" },
     { name = "haywire-core" },
     { name = "numpy" },
     { name = "spoutgl", marker = "sys_platform == 'win32'" },
     { name = "syphon-python", marker = "sys_platform == 'darwin'" },
-    { name = "typing-extensions" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "cyndilib", specifier = ">=0.1.3" },
     { name = "cyomtlib", specifier = ">=0.1.2" },
-    { name = "haybale-core", editable = "../haywire-repo/barn/haybale-core" },
     { name = "haybale-image", editable = "../haywire-repo/barn/haybale-image" },
     { name = "haywire-core", editable = "../haywire-repo/packages/haywire-core" },
     { name = "numpy" },
     { name = "spoutgl", marker = "sys_platform == 'win32'", specifier = ">=0.1.1" },
     { name = "syphon-python", marker = "sys_platform == 'darwin'", specifier = ">=0.2.0" },
-    { name = "typing-extensions", specifier = ">=4.15.0" },
 ]
 
 [[package]]

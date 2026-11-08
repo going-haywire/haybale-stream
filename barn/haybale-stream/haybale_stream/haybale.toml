@@ -7,7 +7,7 @@ version = "0.0.1"
 on_reload = "restart"
 
 # Sibling haybales this library subscribes to, as MODULE names.
-linked_libraries = ["haybale_core", "haybale_image"]
+linked_libraries = ["haybale_image"]
 description = "Share video frames between applications over Syphon, Spout, NDI and OMT"
 homepage_url = "https://github.com/going-haywire/haybale-stream"
 documentation_url = "https://github.com/going-haywire/haybale-stream#readme"

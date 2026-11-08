@@ -15,7 +15,7 @@ import logging
 import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, Self
 
 import numpy as np
 
@@ -60,7 +60,7 @@ class Sender(ABC):
     def close(self) -> None:
         """Stop publishing and release native resources. Safe to call twice."""
 
-    def __enter__(self) -> Sender:
+    def __enter__(self) -> Self:
         self.open()
         return self
 
@@ -100,21 +100,23 @@ class ClockedSender(Sender):
     def open(self) -> None:
         self._open_native()
         self._stop.clear()
-        self._thread = threading.Thread(target=self._run, name=f"{type(self).__name__}-{self.name}", daemon=True)
+        self._thread = threading.Thread(
+            target=self._run, name=f"{type(self).__name__}-{self.name}", daemon=True
+        )
         self._thread.start()
 
     def send(self, pixels: np.ndarray, frame_rate: float = 30.0) -> None:
-        # Own the bytes: the caller's array may be a view of a value other nodes still read.
-        frame = np.ascontiguousarray(pixels, dtype=np.uint8)
+        # Own the bytes: the caller's array may be a read-only view of an image other nodes
+        # still read, and native writers want a writable buffer. np.array always copies.
+        frame = np.array(pixels, dtype=np.uint8, order="C")
         with self._lock:
             self._latest = (frame, frame_rate)
         self._new.set()
 
     def _run(self) -> None:
         while not self._stop.is_set():
-            if not self.steady_stream or self._latest is None:
-                if not self._new.wait(0.1):
-                    continue
+            if (not self.steady_stream or self._latest is None) and not self._new.wait(0.1):
+                continue
             self._new.clear()
             with self._lock:
                 latest = self._latest
@@ -143,8 +145,11 @@ class Receiver(ABC):
         self.source = source
 
     @abstractmethod
-    def open(self) -> None:
-        """Connect. Raises ``BackendUnavailable`` or ``LookupError`` (source not found)."""
+    def open(self, timeout: float = 5.0) -> None:
+        """Connect, waiting up to ``timeout`` s for the source to appear.
+
+        Raises ``BackendUnavailable`` or ``LookupError`` (source not found).
+        """
 
     @abstractmethod
     def poll(self, timeout: float = 0.0) -> Frame | None:
@@ -154,7 +159,7 @@ class Receiver(ABC):
     def close(self) -> None:
         """Disconnect and release native resources. Safe to call twice."""
 
-    def __enter__(self) -> Receiver:
+    def __enter__(self) -> Self:
         self.open()
         return self
 

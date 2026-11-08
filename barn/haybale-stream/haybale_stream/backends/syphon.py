@@ -63,7 +63,7 @@ class SyphonReceiver(Receiver):
         self._client = None
         self._directory = None
 
-    def open(self) -> None:
+    def open(self, timeout: float = 5.0) -> None:
         import syphon
 
         directory = syphon.SyphonServerDirectory()
