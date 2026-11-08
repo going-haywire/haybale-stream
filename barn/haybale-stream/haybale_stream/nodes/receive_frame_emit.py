@@ -1,4 +1,4 @@
-"""Receive Frame Emit — a receiver thread that pushes every new frame to Frame Event nodes."""
+"""Receive Frame Emit — a receiver thread that pushes every new frame to Image Event nodes."""
 
 import threading
 import time
@@ -9,6 +9,7 @@ from haywire.core.settings import bag
 
 from ..backends import get_backend
 from ..backends.base import BackendUnavailable
+from ..backends.convert import frame_to_image
 from .settings import ReceiveSettings
 
 _RETRY_AFTER = 2.0  # seconds between attempts to reach a source that was not there
@@ -23,20 +24,20 @@ _POLL_WAIT = 0.1  # seconds the receiver thread waits for a frame before checkin
     node_type=NodeType.CONTROL,
 )
 class ReceiveFrameEmitNode(BaseNode):
-    """Receives frames in the background and hands each new one to the connected Frame Event nodes.
+    """Receives frames in the background and hands each new one to the connected Image Event nodes.
 
     Unlike Receive Frame, nothing has to poll it: send `Start` once and every frame that
-    arrives triggers the Frame Event nodes wired to `Subscribers`. A source that is not
+    arrives triggers the Image Event nodes wired to `Subscribers`. A source that is not
     there yet is retried every two seconds while the node runs.
 
     ```text
-    Begin Play → Receive Frame Emit ⇢ Frame Event → View Image
+    Begin Play → Receive Frame Emit ⇢ Image Event → View Image
     ```
 
     Inputs:
         start: Begin receiving
         stop: Stop receiving
-        callbacks: Pooled subscriptions from Frame Event nodes
+        callbacks: Pooled subscriptions from Image Event nodes
 
     Outputs:
         started / stopped: Control flow after the receiver starts or stops
@@ -45,15 +46,16 @@ class ReceiveFrameEmitNode(BaseNode):
     stream = bag(ReceiveSettings)
 
     def init(self) -> None:
-        from haywire.barn.builtin.types import CALLBACK, EXEC, STRING
+        from haywire.barn.builtin.types import EXEC, STRING
         from haywire.barn.builtin.widgets import SimpleLabelWidget
         from haybale_core.types import PooledType
+        from haybale_image.types.callback import CALLBACK_IMAGE
 
         self.add(EXEC.as_inlet("start", label="Start"))
         self.add(EXEC.as_inlet("stop", label="Stop"))
         self.add(
-            PooledType[CALLBACK].as_inlet(
-                "callbacks", label="Subscribers", description="Connect to Frame Event nodes"
+            PooledType[CALLBACK_IMAGE].as_inlet(
+                "callbacks", label="Subscribers", description="Connect to Image Event nodes"
             )
         )
         self.add(STRING.as_config("status", default="Idle", label="Status", widget=SimpleLabelWidget.config()))
@@ -120,7 +122,7 @@ class ReceiveFrameEmitNode(BaseNode):
 
     def hb_subscribers(self) -> list[str]:
         subs = self.value("callbacks") or {}
-        return [name for name in subs.values() if name]
+        return [v.name for v in subs.values() if v is not None and v.name]
 
     def hb_loop(self, context: ExecutionContext, stop: threading.Event, backend_key: str, source: str) -> None:
         """Receiver thread: connect (retrying), then emit one callback per new frame."""
@@ -149,13 +151,15 @@ class ReceiveFrameEmitNode(BaseNode):
                 if frame is None:
                     continue
                 frame_number += 1
+                subscribers = self.hb_subscribers()
+                if not subscribers:
+                    continue
                 payload = {
-                    "frame": frame,
-                    "backend": backend_key,
-                    "frame_number": frame_number,
+                    "image": frame_to_image(frame, backend),
                     "timestamp": time.monotonic() - started,
+                    "frame_number": frame_number,
                 }
-                for name in self.hb_subscribers():
+                for name in subscribers:
                     context.emit_callback(event_name=name, payload=payload)
         except BackendUnavailable as exc:
             self.hb_status(f"Error: {exc}")

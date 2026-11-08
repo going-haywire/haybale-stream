@@ -23,8 +23,7 @@ Frames travel as `IMAGE` values from `haybale-image`. See [docs/design.md](docs/
 |------|--------------|
 | Send Frame | Publishes an `IMAGE` under a name on NDI, OMT, Syphon or Spout. |
 | Receive Frame | Fetches the newest frame from a named source as `IMAGE_RGBA`; exits through `Frame` or `No frame`. |
-| Receive Frame Emit | Receives on its own thread and emits a callback per frame to connected Frame Event nodes (like the visiongraph camera nodes). |
-| Frame Event | Event node: runs its flow per frame from a Receive Frame Emit; outputs `Image`, `Frame Number`, `Timestamp`. |
+| Receive Frame Emit | Receives on its own thread and emits a callback per frame to connected Image Event nodes (from haybale-image) (like the visiongraph camera nodes). |
 
 Status: NDI and OMT are tested on Linux. Syphon and Spout are implemented but not yet run
 on macOS / Windows.
