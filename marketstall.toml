@@ -4,11 +4,11 @@
 [[haybales]]
 name = "haybale-stream"
 label = "Stream"
-version = "0.0.2"
+version = "0.0.3"
 require = "haywire-core>=0.3.0"
 description = "Share video frames between applications over Syphon, Spout, NDI and OMT"
 source = "pypi"
-install_spec = "haybale-stream==0.0.2"
+install_spec = "haybale-stream==0.0.3"
 tags = [ "video", "streaming", "syphon", "spout", "ndi", "omt", "texture sharing",]
 on_reload = "none"
 linked_libraries = [ "haybale_image", "haybale_core",]

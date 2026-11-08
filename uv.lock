@@ -703,7 +703,7 @@ requires-dist = [
 
 [[package]]
 name = "haybale-stream"
-version = "0.0.2"
+version = "0.0.3"
 source = { editable = "barn/haybale-stream" }
 dependencies = [
     { name = "cyndilib" },

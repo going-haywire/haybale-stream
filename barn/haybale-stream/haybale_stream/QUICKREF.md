@@ -1,4 +1,4 @@
-# haybale-stream — component index (v0.0.2)
+# haybale-stream — component index (v0.0.3)
 
 ## node
 - `haybale-stream:node:ReceiveFrameEmitNode` — Receive Frame Emit — Receives frames from NDI, OMT, Syphon or Spout on its own thread and emits a callback per frame  _tags: stream, receive, emit, callback, ndi, omt, syphon, spout, video, input_
