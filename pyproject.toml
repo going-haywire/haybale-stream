@@ -1,0 +1,68 @@
+[project]
+name = "haybale-stream-dev"
+version = "0.0.1"
+requires-python = ">=3.12"
+dependencies = ["haywire-studio>=0.0.39", "haybale-marketplace>=0.0.39", "haybale-stream", "haybale-core", "haybale-image", "haybale-studio", "haybale-share>=0.0.39", "haybale-graph-editor>=0.0.39", "haybale-haystack>=0.0.39"]
+
+[dependency-groups]
+dev = ["pytest", "pytest-timeout", "ruff"]
+
+[tool.uv.workspace]
+members = [ "barn/*",]
+
+[tool.uv.sources.haybale-stream]
+workspace = true
+
+[tool.uv.sources.haywire-studio]
+path = "../haywire-repo/packages/haywire-studio"
+editable = true
+
+[tool.uv.sources.haywire-core]
+path = "../haywire-repo/packages/haywire-core"
+editable = true
+
+[tool.uv.sources.haybale-core]
+path = "../haywire-repo/barn/haybale-core"
+editable = true
+
+[tool.uv.sources.haybale-image]
+path = "../haywire-repo/barn/haybale-image"
+editable = true
+
+[tool.uv.sources.haybale-studio]
+path = "../haywire-repo/barn/haybale-studio"
+editable = true
+
+[tool.uv.sources.haybale-marketplace]
+path = "../haywire-repo/barn/haybale-marketplace"
+editable = true
+
+[tool.uv.sources.haybale-share]
+path = "../haywire-repo/barn/haybale-share"
+editable = true
+
+[tool.uv.sources.haybale-graph-editor]
+path = "../haywire-repo/barn/haybale-graph-editor"
+editable = true
+
+[tool.uv.sources.haybale-haystack]
+path = "../haywire-repo/barn/haybale-haystack"
+editable = true
+
+[tool.ruff]
+line-length = 109
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: Unit tests (fast, isolated)",
+    "integration: Integration tests (slower, full system)",
+    "network: Needs a working local network stack / mDNS (NDI, OMT loopback)",
+]
+addopts = "-v --strict-markers --tb=short"
+timeout = 120
+
+[tool.haywire.marketstall]
+# Released wheels go to PyPI, so every marketstall row carries
+# `haybale-stream==<version>` rather than a git clone spec.
+distribute = "pypi"
