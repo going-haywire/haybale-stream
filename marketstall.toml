@@ -1,0 +1,24 @@
+# marketstall.toml — share this file's raw URL so others can subscribe to your library feed
+# Run: haywire share   to update this file
+
+[[haybales]]
+name = "haybale-stream"
+label = "Stream"
+version = "0.0.2"
+require = "haywire-core>=0.3.0"
+description = "Share video frames between applications over Syphon, Spout, NDI and OMT"
+source = "pypi"
+install_spec = "haybale-stream==0.0.2"
+tags = [ "video", "streaming", "syphon", "spout", "ndi", "omt", "texture sharing",]
+on_reload = "none"
+linked_libraries = [ "haybale_image", "haybale_core",]
+origin = "https://github.com/going-haywire/haybale-stream"
+origin_provider = "github"
+homepage_url = "https://github.com/going-haywire/haybale-stream"
+documentation_url = "https://github.com/going-haywire/haybale-stream#readme"
+issues_url = "https://github.com/going-haywire/haybale-stream/issues"
+[[haybales.authors]]
+name = "maybites"
+url = "https://github.com/maybites"
+
+
