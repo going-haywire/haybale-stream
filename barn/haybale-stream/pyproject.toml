@@ -4,7 +4,7 @@ version = "0.0.1"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "haybale-image>=0.3.3",
+    "haybale-image>=0.3.4",
     "haywire-core>=0.3.0",
     "numpy",
     # NDI and OMT wheels bundle their native libraries on Linux, macOS and Windows.
