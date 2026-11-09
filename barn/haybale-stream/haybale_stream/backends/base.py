@@ -42,6 +42,26 @@ class Frame:
         return int(self.pixels.shape[0])
 
 
+@dataclass(frozen=True)
+class AudioPacket:
+    """One received audio block: ``samples`` is float32 shaped ``(channels, frames)``.
+
+    ``timestamp`` is the sender's clock in 100 ns ticks, or ``None`` when it sent none.
+    """
+
+    samples: np.ndarray
+    sample_rate: int
+    timestamp: int | None = None
+
+    @property
+    def channels(self) -> int:
+        return int(self.samples.shape[0])
+
+    @property
+    def frames(self) -> int:
+        return int(self.samples.shape[1])
+
+
 class Sender(ABC):
     """Publishes frames under a name that receivers discover."""
 
@@ -167,6 +187,67 @@ class Receiver(ABC):
         self.close()
 
 
+class AudioSender(ABC):
+    """Publishes audio blocks under a name that receivers discover."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    @abstractmethod
+    def open(self) -> None:
+        """Start publishing. Raises ``BackendUnavailable`` if the backend cannot run."""
+
+    @abstractmethod
+    def send_audio(self, samples: np.ndarray, sample_rate: int, timestamp: int) -> None:
+        """Publish one ``(channels, frames)`` float32 block stamped ``timestamp`` (100 ns ticks).
+
+        The caller owns the pacing: this never relies on the library's own send timing.
+        """
+
+    @abstractmethod
+    def close(self) -> None:
+        """Stop publishing and release native resources. Safe to call twice."""
+
+    def __enter__(self) -> Self:
+        self.open()
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
+
+
+class AudioReceiver(ABC):
+    """Receives audio blocks from one named source."""
+
+    def __init__(self, source: str) -> None:
+        self.source = source
+
+    @abstractmethod
+    def open(self, timeout: float = 5.0) -> None:
+        """Connect, waiting up to ``timeout`` s for the source to appear.
+
+        Raises ``BackendUnavailable`` or ``LookupError`` (source not found).
+        """
+
+    @abstractmethod
+    def receive_audio(self, timeout: float = 0.0) -> AudioPacket | None:
+        """Return the next block, or ``None`` if none arrives within ``timeout`` s.
+
+        The samples are a copy the caller may keep.
+        """
+
+    @abstractmethod
+    def close(self) -> None:
+        """Disconnect and release native resources. Safe to call twice."""
+
+    def __enter__(self) -> Self:
+        self.open()
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
+
+
 class Backend(ABC):
     """One transport: knows whether it can run here, lists sources, builds senders and receivers."""
 
@@ -178,6 +259,8 @@ class Backend(ABC):
     channel_order: ClassVar[str] = "rgba"
     #: Whether a sender can be told to resend its last frame (see ``ClockedSender``).
     supports_steady_stream: ClassVar[bool] = False
+    #: Whether the backend also moves audio (``create_audio_sender`` / ``create_audio_receiver``).
+    supports_audio: ClassVar[bool] = False
 
     @classmethod
     def supported_here(cls) -> bool:
@@ -213,3 +296,11 @@ class Backend(ABC):
     @classmethod
     @abstractmethod
     def create_receiver(cls, source: str) -> Receiver: ...
+
+    @classmethod
+    def create_audio_sender(cls, name: str) -> AudioSender:
+        raise BackendUnavailable(f"{cls.label} does not carry audio")
+
+    @classmethod
+    def create_audio_receiver(cls, source: str) -> AudioReceiver:
+        raise BackendUnavailable(f"{cls.label} does not carry audio")
