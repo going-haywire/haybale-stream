@@ -7,12 +7,12 @@ version = "0.1.0"
 on_reload = "restart"
 
 # Sibling haybales this library subscribes to, as MODULE names.
-linked_libraries = ["haybale_image", "haybale_core"]
+linked_libraries = ["haybale_image", "haybale_core", "haybale_audio"]
 description = "Share video frames between applications over Syphon, Spout, NDI and OMT, and audio over OMT"
 homepage_url = "https://github.com/going-haywire/haybale-stream"
 documentation_url = "https://github.com/going-haywire/haybale-stream#readme"
 issues_url = "https://github.com/going-haywire/haybale-stream/issues"
-tags = ["video", "streaming", "syphon", "spout", "ndi", "omt", "texture sharing"]
+tags = ["video", "audio", "streaming", "syphon", "spout", "ndi", "omt", "texture sharing"]
 origin = "https://github.com/going-haywire/haybale-stream"
 origin_provider = "github"
 
