@@ -63,7 +63,7 @@ These apply when editing this library; the long-form versions live in the monore
   branch checked out. `distribute = "pypi"` is set here, so the marketstall rows pin
   `haybale-stream==<version>`.
 - You do not upload to PyPI yourself: `share` pushes the `v<version>` tag and the `publish.yml`
-  GitHub Actions workflow tests, builds and uploads the wheel. Watch it with `gh run watch`, then
+  GitHub Actions workflow builds the wheel, checks that its dependencies resolve on PyPI, and uploads it. Watch it with `gh run watch`, then
   confirm `https://pypi.org/project/haybale-stream/<version>/` returns 200. If the publish job
   fails, fix the cause and re-run it on the same tag with `gh workflow run publish.yml --ref v<version>`;
   do not delete or move tags yourself, ask the user. `--first-release` is only for a new package name
