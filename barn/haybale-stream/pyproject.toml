@@ -16,8 +16,8 @@ dependencies = [
     "syphon-python>=0.2.0; sys_platform == 'darwin'",
     "haybale-core",
 ]
-description = "Share video frames between applications over Syphon, Spout, NDI and OMT"
-keywords = ["video", "streaming", "syphon", "spout", "ndi", "omt", "texture sharing"]
+description = "Share video frames between applications over Syphon, Spout, NDI and OMT, and audio over OMT"
+keywords = ["video", "audio", "streaming", "syphon", "spout", "ndi", "omt", "texture sharing"]
 
 [[project.authors]]
 name = "maybites"
