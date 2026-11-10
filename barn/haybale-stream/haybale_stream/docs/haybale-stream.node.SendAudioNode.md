@@ -8,11 +8,11 @@ Publishes the audio blocks of a flow to other applications over OMT
 
 | id | direction | type | description |
 |---|---|---|---|
-| `write` | inlet | `haywire-core:type:EXEC` | Signal for controlling execution flow between nodes |
+| `write` | inlet | `haybale-audio:type:EXEC_AUDIO` | Signal for sequencing the nodes of an audio flow |
 | `stop` | inlet | `haywire-core:type:EXEC` | Signal for controlling execution flow between nodes |
 | `audio` | inlet | `haybale-audio:type:AUDIO` | Block to publish |
 | `status` | config | `haywire-core:type:STRING` | Text data |
-| `next` | outlet | `haywire-core:type:EXEC` | Runs after the block is queued |
+| `next` | outlet | `haybale-audio:type:EXEC_AUDIO` | Runs after the block is queued |
 
 ## Settings
 

@@ -4,7 +4,7 @@ version = "0.1.1"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "haybale-audio>=0.4.0",
+    "haybale-audio>=0.4.1",
     "haybale-image>=0.3.4",
     "haywire-core>=0.3.0",
     "numpy",

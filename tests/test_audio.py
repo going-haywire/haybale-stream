@@ -198,6 +198,17 @@ def test_audio_port_layouts(library_system):
     assert {"start", "stop", "callbacks", "started", "stopped", "status"} <= set(emit.ports)
 
 
+def test_send_audio_flow_pins_are_audio_exec_and_stop_is_plain_exec(library_system):
+    from haybale_audio.types.exec_audio import EXEC_AUDIO
+    from haybale_stream.nodes import SendAudioNode
+    from haywire.barn.builtin.types import EXEC
+
+    send = _build(SendAudioNode)
+    assert send.ports["write"].type_cls is EXEC_AUDIO
+    assert send.ports["next"].type_cls is EXEC_AUDIO
+    assert send.ports["stop"].type_cls is EXEC
+
+
 def test_only_omt_carries_audio():
     assert get_backend("omt").supports_audio
     for key in ("ndi", "syphon", "spout"):
