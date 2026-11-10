@@ -53,16 +53,17 @@ class SendAudioNode(BaseNode):
 
     def init(self) -> None:
         from haybale_audio.types.audio import AUDIO
+        from haybale_audio.types.exec_audio import EXEC_AUDIO
         from haywire.barn.builtin.types import EXEC, STRING
         from haywire.barn.builtin.widgets import SimpleLabelWidget
 
-        self.add(EXEC.as_inlet("write", label="Write"))
+        self.add(EXEC_AUDIO.as_inlet("write", label="Write"))
         self.add(EXEC.as_inlet("stop", label="Stop"))
         self.add(AUDIO.as_inlet("audio", label="Audio", description="Block to publish"))
         self.add(
             STRING.as_config("status", default="Idle", label="Status", widget=SimpleLabelWidget.config())
         )
-        self.add(EXEC.as_outlet("next", label="Next", description="Runs after the block is queued"))
+        self.add(EXEC_AUDIO.as_outlet("next", label="Next", description="Runs after the block is queued"))
 
     def post_init(self) -> None:
         self.hb_sender: AudioSender | None = None
