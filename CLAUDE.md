@@ -61,7 +61,13 @@ These apply when editing this library; the long-form versions live in the monore
   check. If `uv.lock` is already dirty, `git checkout uv.lock` before releasing.
 - It needs a clean working tree, an `origin` remote, push credentials, and the default
   branch checked out. `distribute = "pypi"` is set here, so the marketstall rows pin
-  `haybale-stream==<version>`; the PyPI upload is a separate step (`publish-to-pypi.md`).
+  `haybale-stream==<version>`.
+- You do not upload to PyPI yourself: `share` pushes the `v<version>` tag and the `publish.yml`
+  GitHub Actions workflow tests, builds and uploads the wheel. Watch it with `gh run watch`, then
+  confirm `https://pypi.org/project/haybale-stream/<version>/` returns 200. If the publish job
+  fails, fix the cause and re-run it on the same tag with `gh workflow run publish.yml --ref v<version>`;
+  do not delete or move tags yourself, ask the user. `--first-release` is only for a new package name
+  (see `publish-to-pypi.md`).
 - Before releasing, read `../haywire-repo/docs/guides/sharing-libraries.md` (and
   `docs/architecture/sharing/share-pipeline-arch.md` if needed).
 - If a dependency pin needs a version that is not released yet, stop and ask.

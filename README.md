@@ -54,8 +54,11 @@ uv run --frozen haywire share --bump patch|minor|major   # or an explicit X.Y.Z
 
 This bumps every `barn/*` library in lockstep, regenerates docs and `marketstall.toml`,
 then commits, tags `v<version>` and pushes to `origin` itself. It needs a clean working tree
-and the default branch checked out (`--frozen` keeps `uv.lock` from being re-locked; `git checkout uv.lock` first if it is dirty). The project uses `distribute = "pypi"`, so uploading the
-package to PyPI is a separate step (see `publish-to-pypi.md` in the haywire docs).
+and the default branch checked out (`--frozen` keeps `uv.lock` from being re-locked; `git checkout uv.lock` first if it is dirty). The project uses `distribute = "pypi"`: there is no manual
+upload, the tag push starts the `publish.yml` GitHub Actions workflow, which tests, builds and uploads
+the wheel to PyPI. Watch it with `gh run watch` and confirm `https://pypi.org/project/haybale-stream/<version>/`
+returns 200. If the publish job fails, re-run it on the same tag with
+`gh workflow run publish.yml --ref v<version>` (see `publish-to-pypi.md` in the haywire docs).
 
 ## Credits
 
