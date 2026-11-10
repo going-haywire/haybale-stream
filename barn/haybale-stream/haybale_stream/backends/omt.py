@@ -2,9 +2,21 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
-from .base import Backend, BackendUnavailable, ClockedSender, Frame, Receiver, Sender
+from .base import (
+    AudioPacket,
+    AudioReceiver,
+    AudioSender,
+    Backend,
+    BackendUnavailable,
+    ClockedSender,
+    Frame,
+    Receiver,
+    Sender,
+)
 
 
 class OMTSender(ClockedSender):
@@ -62,11 +74,68 @@ class OMTReceiver(Receiver):
             receiver.close()
 
 
+class OMTAudioSender(AudioSender):
+    def __init__(self, name: str) -> None:
+        super().__init__(name)
+        self._sender: Any = None
+
+    def open(self) -> None:
+        import cyomtlib as omt
+
+        self._sender = omt.Sender(self.name)
+
+    @property
+    def address(self) -> str | None:
+        """The name receivers see (OMT prefixes the host name)."""
+        return None if self._sender is None else self._sender.address
+
+    def send_audio(self, samples: np.ndarray, sample_rate: int, timestamp: int) -> None:
+        if self._sender is None:
+            raise RuntimeError("the sender is not open")
+        # An explicit timestamp: with -1 the library throttles small blocks itself.
+        self._sender.send_audio(samples, sample_rate, timestamp=timestamp)
+
+    def close(self) -> None:
+        sender, self._sender = self._sender, None
+        if sender is not None:
+            sender.close()
+
+
+class OMTAudioReceiver(AudioReceiver):
+    def __init__(self, source: str) -> None:
+        super().__init__(source)
+        self._receiver: Any = None
+
+    def open(self, timeout: float = 5.0) -> None:
+        import cyomtlib as omt
+
+        self._receiver = omt.Receiver(self.source, frame_types=omt.FrameType.AUDIO)
+
+    def receive_audio(self, timeout: float = 0.0) -> AudioPacket | None:
+        import cyomtlib as omt
+
+        if self._receiver is None:
+            return None
+        frame = self._receiver.receive(omt.FrameType.AUDIO, timeout_ms=int(timeout * 1000))
+        if not isinstance(frame, omt.AudioFrame):
+            return None
+        # The library may reuse its buffer after the next receive: np.array always copies.
+        samples = np.array(frame.data, dtype=np.float32, order="C")
+        timestamp = int(frame.timestamp) if frame.timestamp is not None and frame.timestamp >= 0 else None
+        return AudioPacket(samples, int(frame.sample_rate), timestamp)
+
+    def close(self) -> None:
+        receiver, self._receiver = self._receiver, None
+        if receiver is not None:
+            receiver.close()
+
+
 class OMTBackend(Backend):
     key = "omt"
     label = "OMT"
     channel_order = "bgra"
     supports_steady_stream = True
+    supports_audio = True
 
     @classmethod
     def _check_dependency(cls) -> str | None:
@@ -95,3 +164,15 @@ class OMTBackend(Backend):
         if (reason := cls.unavailable_reason()) is not None:
             raise BackendUnavailable(reason)
         return OMTReceiver(source)
+
+    @classmethod
+    def create_audio_sender(cls, name: str) -> AudioSender:
+        if (reason := cls.unavailable_reason()) is not None:
+            raise BackendUnavailable(reason)
+        return OMTAudioSender(name)
+
+    @classmethod
+    def create_audio_receiver(cls, source: str) -> AudioReceiver:
+        if (reason := cls.unavailable_reason()) is not None:
+            raise BackendUnavailable(reason)
+        return OMTAudioReceiver(source)

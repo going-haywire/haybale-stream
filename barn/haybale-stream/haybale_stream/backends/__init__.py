@@ -2,7 +2,17 @@
 
 from __future__ import annotations
 
-from .base import Backend, BackendUnavailable, ClockedSender, Frame, Receiver, Sender
+from .base import (
+    AudioPacket,
+    AudioReceiver,
+    AudioSender,
+    Backend,
+    BackendUnavailable,
+    ClockedSender,
+    Frame,
+    Receiver,
+    Sender,
+)
 from .ndi import NDIBackend
 from .omt import OMTBackend
 from .spout import SpoutBackend
@@ -28,7 +38,15 @@ def available_backends() -> list[type[Backend]]:
     return [b for b in BACKENDS.values() if b.is_available()]
 
 
+def audio_backends() -> list[type[Backend]]:
+    """The backends that carry audio and can run on this machine right now."""
+    return [b for b in available_backends() if b.supports_audio]
+
+
 __all__ = [
+    "AudioPacket",
+    "AudioReceiver",
+    "AudioSender",
     "BACKENDS",
     "Backend",
     "BackendUnavailable",
@@ -36,6 +54,7 @@ __all__ = [
     "Frame",
     "Receiver",
     "Sender",
+    "audio_backends",
     "available_backends",
     "get_backend",
 ]
