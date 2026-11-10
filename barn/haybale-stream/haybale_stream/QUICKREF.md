@@ -1,4 +1,4 @@
-# haybale-stream — component index (v0.1.1)
+# haybale-stream — component index (v0.1.2)
 
 ## node
 - `haybale-stream:node:ReceiveAudioEmitNode` — Receive Audio Emit — Receives audio from an OMT source on its own thread and emits a callback per block  _tags: stream, receive, emit, callback, omt, audio, sound, input_

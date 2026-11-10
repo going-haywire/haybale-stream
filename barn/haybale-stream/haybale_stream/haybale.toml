@@ -3,7 +3,7 @@
 
 name = "haybale-stream"
 label = "Stream"
-version = "0.1.1"
+version = "0.1.2"
 on_reload = "restart"
 
 # Sibling haybales this library subscribes to, as MODULE names.

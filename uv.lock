@@ -597,7 +597,7 @@ wheels = [
 
 [[package]]
 name = "haybale-audio"
-version = "0.4.0"
+version = "0.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "haybale-core" },
@@ -607,29 +607,31 @@ dependencies = [
     { name = "sounddevice" },
     { name = "soundfile" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ae/b2/26bab981ed5a1c273050c4bcfc41dc48cdc937134a44ffc853fe17c41bff/haybale_audio-0.4.0.tar.gz", hash = "sha256:a25bcada928fdade9ed3364f2c924e2d643a378b4fc213d596b08ba43fe83c04", size = 28410, upload-time = "2026-11-09T23:49:56.669Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/00/06fa0750a70118f1342c5f07178ab28c80d1bea346af45fbf32652568a6b/haybale_audio-0.4.1.tar.gz", hash = "sha256:c085ba3425a9a893d2df281b6420e07ecb74f44d5873ce9aa712ca32ef85bf95", size = 31525, upload-time = "2026-11-10T20:45:01.073Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0a/de/a45894c85cef49560ae07aabc94db2ae97f88b77ddc20af8bdfb26482ff9/haybale_audio-0.4.0-py3-none-any.whl", hash = "sha256:719b93ea8e328aaf938cbc08623df4af0bc47a902b5909659746fd822c850512", size = 50580, upload-time = "2026-11-09T23:49:55.758Z" },
+    { url = "https://files.pythonhosted.org/packages/40/fd/2dfabd3fad0b27e7bf402adc543052379a95976a5345d2d781c2af97f8d1/haybale_audio-0.4.1-py3-none-any.whl", hash = "sha256:a39e47416dc7b035a6afc0912fa8e9e6fe36b58844f0f091da749dcad51398d8", size = 55227, upload-time = "2026-11-10T20:45:00.207Z" },
 ]
 
 [[package]]
 name = "haybale-core"
-version = "0.4.0"
+version = "0.4.1"
 source = { editable = "../haywire-repo/barn/haybale-core" }
 dependencies = [
     { name = "haywire-core" },
+    { name = "nicegui" },
     { name = "typing-extensions" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "haywire-core", editable = "../haywire-repo/packages/haywire-core" },
+    { name = "nicegui", specifier = ">=3.18.0" },
     { name = "typing-extensions" },
 ]
 
 [[package]]
 name = "haybale-graph-editor"
-version = "0.4.0"
+version = "0.4.1"
 source = { editable = "../haywire-repo/barn/haybale-graph-editor" }
 dependencies = [
     { name = "haywire-core" },
@@ -644,7 +646,7 @@ requires-dist = [
 
 [[package]]
 name = "haybale-haystack"
-version = "0.4.0"
+version = "0.4.1"
 source = { editable = "../haywire-repo/barn/haybale-haystack" }
 dependencies = [
     { name = "haybale-graph-editor" },
@@ -665,7 +667,7 @@ requires-dist = [
 
 [[package]]
 name = "haybale-image"
-version = "0.4.0"
+version = "0.4.1"
 source = { editable = "../haywire-repo/barn/haybale-image" }
 dependencies = [
     { name = "fastapi" },
@@ -692,7 +694,7 @@ provides-extras = ["torch"]
 
 [[package]]
 name = "haybale-marketplace"
-version = "0.4.0"
+version = "0.4.1"
 source = { editable = "../haywire-repo/barn/haybale-marketplace" }
 dependencies = [
     { name = "haybale-studio" },
@@ -711,7 +713,7 @@ requires-dist = [
 
 [[package]]
 name = "haybale-share"
-version = "0.4.0"
+version = "0.4.1"
 source = { editable = "../haywire-repo/barn/haybale-share" }
 dependencies = [
     { name = "haywire-core" },
@@ -726,7 +728,7 @@ requires-dist = [
 
 [[package]]
 name = "haybale-stream"
-version = "0.1.1"
+version = "0.1.2"
 source = { editable = "barn/haybale-stream" }
 dependencies = [
     { name = "cyndilib" },
@@ -744,7 +746,7 @@ dependencies = [
 requires-dist = [
     { name = "cyndilib", specifier = ">=0.1.3" },
     { name = "cyomtlib", specifier = ">=0.1.2" },
-    { name = "haybale-audio", specifier = ">=0.4.0" },
+    { name = "haybale-audio", specifier = ">=0.4.1" },
     { name = "haybale-core", editable = "../haywire-repo/barn/haybale-core" },
     { name = "haybale-image", editable = "../haywire-repo/barn/haybale-image" },
     { name = "haywire-core", editable = "../haywire-repo/packages/haywire-core" },
@@ -798,7 +800,7 @@ dev = [
 
 [[package]]
 name = "haybale-studio"
-version = "0.4.0"
+version = "0.4.1"
 source = { editable = "../haywire-repo/barn/haybale-studio" }
 dependencies = [
     { name = "haywire-core" },
@@ -815,7 +817,7 @@ requires-dist = [
 
 [[package]]
 name = "haywire-core"
-version = "0.4.0"
+version = "0.4.1"
 source = { editable = "../haywire-repo/packages/haywire-core" }
 dependencies = [
     { name = "attrs" },
@@ -850,7 +852,7 @@ requires-dist = [
 
 [[package]]
 name = "haywire-studio"
-version = "0.4.0"
+version = "0.4.1"
 source = { editable = "../haywire-repo/packages/haywire-studio" }
 dependencies = [
     { name = "cryptography" },
