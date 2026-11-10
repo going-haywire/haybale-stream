@@ -1,4 +1,4 @@
-"""Haybale Stream: send and receive video frames over NDI, OMT, Syphon and Spout."""
+"""Haybale Stream: send and receive video frames over NDI, OMT, Syphon and Spout, and audio over OMT."""
 
 from pathlib import Path
 
@@ -9,7 +9,7 @@ from haywire.core.node.registry import NodeRegistry
 
 @library(file_watcher=False)
 class Library(BaseLibrary):
-    """Stream library: frame-sharing nodes over the backends in ``haybale_stream.backends``."""
+    """Stream library: frame and audio sharing nodes over the backends in ``haybale_stream.backends``."""
 
     def register_components(self):
         """Register the node folder."""
