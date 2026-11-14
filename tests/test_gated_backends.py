@@ -113,6 +113,7 @@ def _fake_syphon(monkeypatch):
 
     class Server:
         device = object()
+        server_description = types.SimpleNamespace(uuid="uuid-1", raw={"uuid": "uuid-1"})
 
         def __init__(self, name):
             calls["server"] = name
@@ -132,9 +133,15 @@ def _fake_syphon(monkeypatch):
         def update_run_loop(self):
             calls["pumped"] = calls.get("pumped", 0) + 1
 
-        def stop(self):
-            pass
+        def close(self):
+            calls["directory_closed"] = True
 
+    class Center:
+        def postNotificationName_object_userInfo_deliverImmediately_(self, name, obj, info, now):
+            calls.setdefault("announced", []).append((name, obj))
+
+    foundation = types.ModuleType("Foundation")
+    foundation.NSDistributedNotificationCenter = types.SimpleNamespace(defaultCenter=Center)
     syphon.SyphonMetalServer, syphon.SyphonServerDirectory = Server, Directory
     utils = types.ModuleType("syphon.utils")
     np_mod = types.ModuleType("syphon.utils.numpy")
@@ -146,6 +153,7 @@ def _fake_syphon(monkeypatch):
         ("syphon.utils", utils),
         ("syphon.utils.numpy", np_mod),
         ("syphon.utils.raw", raw),
+        ("Foundation", foundation),
     ):
         monkeypatch.setitem(sys.modules, name, m)
     monkeypatch.setattr(get_backend("syphon"), "platforms", ("linux", "darwin"))
@@ -162,7 +170,17 @@ def test_syphon_send_and_discover_with_fake_native(monkeypatch):
     assert calls["server"] == "pub"
     assert calls["copied"] == (4, 6, 4)
     assert calls["published"][0] == (6, 4, [6, 4], True)
-    assert calls["stopped"] and calls["pumped"] >= 2
+    assert calls["stopped"] and calls["directory_closed"]
+    assert "announced" not in calls  # the server announced itself; re-announce is rate-limited
+
+
+def test_syphon_sender_reannounces_without_a_main_run_loop(monkeypatch):
+    calls = _fake_syphon(monkeypatch)
+    with get_backend("syphon").create_sender("pub") as sender:
+        sender._announced -= 2.0  # an interval has passed since the last announcement
+        sender.send(np.zeros((4, 6, 4), np.uint8))
+        sender.send(np.zeros((4, 6, 4), np.uint8))
+    assert calls["announced"] == [("info.v002.Syphon.ServerAnnounce", "uuid-1")]
 
 
 def test_gated_factories_raise_when_dependency_missing(monkeypatch):

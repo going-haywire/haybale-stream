@@ -6,13 +6,25 @@ platform elsewhere. Frames cross the CPU (numpy <-> MTLTexture) because haywire 
 live in system memory; a zero-copy GPU path would need a GPU image type.
 
 Server names are shown as ``"<app> | <name>"`` (just ``"<app>"`` when the server is unnamed).
+
+Discovery runs over distributed notifications, which macOS delivers only on the main
+thread's run loop. haywire's main thread runs asyncio, so a server never hears a client's
+announce request; the sender re-posts its own announcement instead, so clients started
+later (UltraGrid, Resolume, ...) still find it.
 """
 
 from __future__ import annotations
 
+import time
+
 import numpy as np
 
 from .base import Backend, BackendUnavailable, Frame, Receiver, Sender
+
+
+# The framework's distributed (cross-process) name, not the local SyphonServerAnnounceNotification.
+_ANNOUNCE = "info.v002.Syphon.ServerAnnounce"
+_ANNOUNCE_INTERVAL = 1.0
 
 
 def _title(server: object) -> str:
@@ -23,15 +35,17 @@ class SyphonSender(Sender):
     def __init__(self, name: str) -> None:
         super().__init__(name)
         self._server = None
-        self._directory = None
+        self._center = None
         self._texture = None
+        self._announced = 0.0
 
     def open(self) -> None:
         import syphon
+        from Foundation import NSDistributedNotificationCenter
 
         self._server = syphon.SyphonMetalServer(self.name)
-        # A headless process must pump the directory's run loop to answer discovery requests.
-        self._directory = syphon.SyphonServerDirectory()
+        self._center = NSDistributedNotificationCenter.defaultCenter()
+        self._announced = time.monotonic()  # the server announced itself on creation
 
     def send(self, pixels: np.ndarray, frame_rate: float = 30.0) -> None:
         from syphon.utils.numpy import copy_image_to_mtl_texture
@@ -45,14 +59,23 @@ class SyphonSender(Sender):
         copy_image_to_mtl_texture(np.ascontiguousarray(pixels, dtype=np.uint8), self._texture)
         # Metal textures, like numpy rows, start at the top-left: flipped=True in Syphon terms.
         self._server.publish_frame_texture(self._texture, size=[width, height], is_flipped=True)
-        self._directory.update_run_loop()
+        self._announce()
+
+    def _announce(self) -> None:
+        now = time.monotonic()
+        if now - self._announced < _ANNOUNCE_INTERVAL:
+            return
+        self._announced = now
+        description = self._server.server_description
+        # Clients that already list this server ignore a repeated announcement.
+        self._center.postNotificationName_object_userInfo_deliverImmediately_(
+            _ANNOUNCE, description.uuid, description.raw, True
+        )
 
     def close(self) -> None:
         self._texture = None
-        directory, self._directory = self._directory, None
+        self._center = None
         server, self._server = self._server, None
-        if directory is not None:
-            directory.stop()
         if server is not None:
             server.stop()
 
@@ -70,7 +93,7 @@ class SyphonReceiver(Receiver):
         directory.update_run_loop()
         description = next((s for s in directory.servers if _title(s) == self.source), None)
         if description is None:
-            directory.stop()
+            directory.close()
             raise LookupError(f"Syphon server {self.source!r} not found")
         self._directory = directory
         self._client = syphon.SyphonMetalClient(description)
@@ -93,7 +116,7 @@ class SyphonReceiver(Receiver):
         if client is not None:
             client.stop()
         if directory is not None:
-            directory.stop()
+            directory.close()
 
 
 class SyphonBackend(Backend):
@@ -127,7 +150,7 @@ class SyphonBackend(Backend):
                 directory.update_run_loop()
             return sorted(_title(s) for s in directory.servers)
         finally:
-            directory.stop()
+            directory.close()
 
     @classmethod
     def create_sender(cls, name: str, *, steady_stream: bool = False) -> Sender:
