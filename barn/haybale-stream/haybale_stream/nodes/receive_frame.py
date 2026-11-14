@@ -9,6 +9,8 @@ from haywire.core.settings import bag
 from ..backends import Receiver, get_backend
 from ..backends.base import BackendUnavailable
 from ..backends.convert import frame_to_image
+from ..backends.sources import cached_sources
+from .run_loop import ensure_main_run_loop
 from .settings import ReceiveSettings
 
 _RETRY_AFTER = 2.0  # seconds between attempts to reach a source that was not there
@@ -30,7 +32,8 @@ class ReceiveFrameNode(BaseNode):
 
     - `Backend`: NDI and OMT run on every platform; Syphon only on macOS, Spout only
       on Windows.
-    - `Source`: pick a discovered sender or type its name. A source that is not there
+    - `Source`: pick a sender found on the selected `Backend` (the list is read again
+      each time it opens) or type its name. A source that is not there
       yet is retried every two seconds while the node runs.
 
     ```text
@@ -53,6 +56,7 @@ class ReceiveFrameNode(BaseNode):
         self.hb_receiver: Receiver | None = None
         self.hb_receiver_key: tuple[str, str] | None = None
         self.hb_retry_at = 0.0
+        cached_sources(str(self.stream.backend))  # start looking before the source list opens
 
     def on_shutdown(self, context: ExecutionContext) -> None:
         self.hb_close()
@@ -73,6 +77,7 @@ class ReceiveFrameNode(BaseNode):
         self.hb_close()
         if not key[1] or time.monotonic() < self.hb_retry_at:
             return None
+        ensure_main_run_loop(key[0])
         receiver = get_backend(key[0]).create_receiver(key[1])
         try:
             receiver.open(timeout=0.5)

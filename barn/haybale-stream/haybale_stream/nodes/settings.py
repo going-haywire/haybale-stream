@@ -6,6 +6,23 @@ from haywire.core.settings import NodeSettings, setting
 
 from ..backends import BACKENDS, audio_backends, available_backends
 from ..backends.sources import all_cached_sources, cached_sources
+from .run_loop import ensure_main_run_loop
+
+
+def source_options(bag: "ReceiveSettings | None" = None) -> list[str]:
+    """Senders found on the bag's backend; on every runnable backend without a bag.
+
+    The default keeps this working with a framework that calls options without the bag.
+    """
+    if bag is None:
+        return all_cached_sources()
+    ensure_main_run_loop(str(bag.backend))
+    return cached_sources(str(bag.backend))
+
+
+def audio_source_options(bag: "AudioReceiveSettings | None" = None) -> list[str]:
+    """Audio senders found on the bag's backend (OMT without a bag)."""
+    return cached_sources("omt" if bag is None else str(bag.backend))
 
 
 def backend_options() -> list[str]:
@@ -60,9 +77,7 @@ class ReceiveSettings(NodeSettings):
         label="Source",
         category="Stream",
         description="Name of the sender to receive from; pick a discovered one or type it",
-        widget=SelectWidget.config(
-            properties={"options": all_cached_sources, "new_value_mode": "add-unique"}
-        ),
+        widget=SelectWidget.config(properties={"options": source_options, "new_value_mode": "add-unique"}),
     )
 
 
@@ -113,6 +128,6 @@ class AudioReceiveSettings(NodeSettings):
         category="Stream",
         description="Name of the sender to receive from; pick a discovered one or type it",
         widget=SelectWidget.config(
-            properties={"options": lambda: cached_sources("omt"), "new_value_mode": "add-unique"}
+            properties={"options": audio_source_options, "new_value_mode": "add-unique"}
         ),
     )

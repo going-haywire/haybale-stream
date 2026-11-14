@@ -10,6 +10,8 @@ from haywire.core.settings import bag
 from ..backends import get_backend
 from ..backends.base import BackendUnavailable
 from ..backends.convert import frame_to_image
+from ..backends.sources import cached_sources
+from .run_loop import ensure_main_run_loop
 from .settings import ReceiveSettings
 
 _RETRY_AFTER = 2.0  # seconds between attempts to reach a source that was not there
@@ -66,6 +68,7 @@ class ReceiveFrameEmitNode(BaseNode):
         self.hb_thread: threading.Thread | None = None
         self.hb_stop = threading.Event()
         self.hb_lock = threading.Lock()
+        cached_sources(str(self.stream.backend))  # start looking before the source list opens
 
     def on_shutdown(self, context: ExecutionContext) -> None:
         self.hb_stop_receiving()
@@ -86,6 +89,7 @@ class ReceiveFrameEmitNode(BaseNode):
         if reason is not None:
             self.hb_status(f"Error: {reason}")
             raise RuntimeError(reason)
+        ensure_main_run_loop(backend_key)
         with self.hb_lock:
             if self.hb_thread is not None and self.hb_thread.is_alive():
                 return "started"

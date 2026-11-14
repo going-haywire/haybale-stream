@@ -12,6 +12,7 @@ from ..backends import get_backend
 from ..backends.audio_convert import packet_to_block
 from ..backends.audio_send import TICKS_PER_SECOND
 from ..backends.base import BackendUnavailable
+from ..backends.sources import cached_sources
 from .settings import AudioReceiveSettings
 
 _RETRY_AFTER = 2.0  # seconds between attempts to reach a source that was not there
@@ -71,6 +72,7 @@ class ReceiveAudioEmitNode(BaseNode):
         self.hb_thread: threading.Thread | None = None
         self.hb_stop = threading.Event()
         self.hb_lock = threading.Lock()
+        cached_sources(str(self.stream.backend))  # start looking before the source list opens
 
     def on_shutdown(self, context: ExecutionContext) -> None:
         self.hb_stop_receiving()

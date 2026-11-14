@@ -8,6 +8,7 @@ from haywire.core.settings import bag
 from ..backends import Sender, get_backend
 from ..backends.base import BackendUnavailable
 from ..backends.convert import image_to_pixels
+from .run_loop import ensure_main_run_loop
 from .settings import SendSettings
 
 
@@ -65,6 +66,7 @@ class SendFrameNode(BaseNode):
             return self.hb_sender
         self.hb_close()
         backend_key, name, steady = key
+        ensure_main_run_loop(backend_key)
         sender = get_backend(backend_key).create_sender(name, steady_stream=steady)
         sender.open()
         self.hb_sender, self.hb_sender_key = sender, key

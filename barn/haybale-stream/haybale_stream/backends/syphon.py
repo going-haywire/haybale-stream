@@ -1,16 +1,17 @@
 """Syphon backend (macOS, Metal), on syphon-python.
 
-UNTESTED on the Linux development machine: the module imports cleanly everywhere, but
-``syphon-python`` only has a macOS wheel, so ``unavailable_reason()`` reports the
-platform elsewhere. Frames cross the CPU (numpy <-> MTLTexture) because haywire images
+Tested on macOS against Simple Server and UltraGrid. ``syphon-python`` only has a macOS
+wheel, so elsewhere the module imports cleanly and ``unavailable_reason()`` reports the
+platform. Frames cross the CPU (numpy <-> MTLTexture) because haywire images
 live in system memory; a zero-copy GPU path would need a GPU image type.
 
 Server names are shown as ``"<app> | <name>"`` (just ``"<app>"`` when the server is unnamed).
 
-Discovery runs over distributed notifications, which macOS delivers only on the main
-thread's run loop. haywire's main thread runs asyncio, so a server never hears a client's
-announce request; the sender re-posts its own announcement instead, so clients started
-later (UltraGrid, Resolume, ...) still find it.
+Discovery runs over distributed notifications, which macOS delivers only while the main
+thread's run loop runs. haywire's main thread runs asyncio, so the host must call
+``pump_main_run_loop()`` there (``nodes/run_loop.py`` does); without it a receiver finds no
+server. The sender also re-posts its own announcement each second, so clients started later
+(UltraGrid, Resolume, ...) find it even where nothing pumps the run loop.
 """
 
 from __future__ import annotations
@@ -21,10 +22,21 @@ import numpy as np
 
 from .base import Backend, BackendUnavailable, Frame, Receiver, Sender
 
-
 # The framework's distributed (cross-process) name, not the local SyphonServerAnnounceNotification.
 _ANNOUNCE = "info.v002.Syphon.ServerAnnounce"
 _ANNOUNCE_INTERVAL = 1.0
+
+
+def pump_main_run_loop() -> None:
+    """Deliver the main run loop's pending events (discovery notifications), without blocking.
+
+    Main thread only: the caller schedules it there, since the host's main thread is not a
+    Cocoa run loop.
+    """
+    from CoreFoundation import CFRunLoopRunInMode, kCFRunLoopDefaultMode, kCFRunLoopRunHandledSource
+
+    while CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, True) == kCFRunLoopRunHandledSource:
+        pass
 
 
 def _title(server: object) -> str:
