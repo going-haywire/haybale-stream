@@ -29,6 +29,10 @@ editable = true
 path = "../haywire-repo/barn/haybale-image"
 editable = true
 
+[tool.uv.sources.haybale-audio]
+path = "../haywire-repo/barn/haybale-audio"
+editable = true
+
 [tool.uv.sources.haybale-studio]
 path = "../haywire-repo/barn/haybale-studio"
 editable = true
