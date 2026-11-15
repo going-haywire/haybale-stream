@@ -2,9 +2,7 @@
 
 import time
 
-from haywire.core.execution.execution_context import ExecutionContext
-from haywire.core.node import BaseNode, NodeType, node
-from haywire.core.settings import bag
+from haywire.api import EXEC, BaseNode, ExecutionContext, NodeType, bag, node
 
 from ..backends import Receiver, get_backend
 from ..backends.base import BackendUnavailable
@@ -46,7 +44,6 @@ class ReceiveFrameNode(BaseNode):
 
     def init(self) -> None:
         from haybale_image.types.image import IMAGE_RGBA
-        from haywire.barn.builtin.types import EXEC
 
         self.add(EXEC.as_inlet("exec", label="Execute", description="Fetches the newest frame"))
         self.add(EXEC.as_outlet("frame", label="Frame", description="A new frame arrived"))

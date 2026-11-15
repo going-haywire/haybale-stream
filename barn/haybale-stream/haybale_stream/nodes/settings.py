@@ -1,8 +1,6 @@
 """Settings shared by the stream nodes."""
 
-from haywire.barn.builtin.types import BOOL, CHOICES, FLOAT, INT, STRING
-from haywire.barn.builtin.widgets import SelectWidget
-from haywire.core.settings import NodeSettings, setting
+from haywire.api import BOOL, CHOICES, FLOAT, INT, STRING, NodeSettings, SelectWidget, setting
 
 from ..backends import BACKENDS, audio_backends, available_backends
 from ..backends.sources import all_known_sources, find_sources, known_sources

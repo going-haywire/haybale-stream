@@ -4,9 +4,7 @@ import time
 
 from haybale_audio.emitter import set_status
 from haybale_audio.value import AudioBlock
-from haywire.core.execution.execution_context import ExecutionContext
-from haywire.core.node import BaseNode, NodeType, node
-from haywire.core.settings import bag
+from haywire.api import EXEC, STRING, BaseNode, ExecutionContext, NodeType, SimpleLabelWidget, bag, node
 
 from ..backends import get_backend
 from ..backends.audio_send import AudioSendQueue
@@ -54,8 +52,6 @@ class SendAudioNode(BaseNode):
     def init(self) -> None:
         from haybale_audio.types.audio import AUDIO
         from haybale_audio.types.exec_audio import EXEC_AUDIO
-        from haywire.barn.builtin.types import EXEC, STRING
-        from haywire.barn.builtin.widgets import SimpleLabelWidget
 
         self.add(EXEC_AUDIO.as_inlet("write", label="Write"))
         self.add(EXEC.as_inlet("stop", label="Stop"))
