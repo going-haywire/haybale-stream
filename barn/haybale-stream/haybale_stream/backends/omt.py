@@ -16,6 +16,7 @@ from .base import (
     Frame,
     Receiver,
     Sender,
+    flip_rows,
 )
 
 
@@ -66,7 +67,8 @@ class OMTReceiver(Receiver):
         if not isinstance(frame, omt.VideoFrame):
             return None
         # packed() views libomt's buffer, valid until the next receive: take a copy.
-        return Frame(np.array(frame.packed(), dtype=np.uint8))
+        pixels = frame.packed()
+        return Frame(flip_rows(pixels) if self.flip else np.array(pixels, dtype=np.uint8))
 
     def close(self) -> None:
         receiver, self._receiver = self._receiver, None

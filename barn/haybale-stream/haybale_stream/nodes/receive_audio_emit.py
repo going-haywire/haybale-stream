@@ -12,7 +12,7 @@ from ..backends import get_backend
 from ..backends.audio_convert import packet_to_block
 from ..backends.audio_send import TICKS_PER_SECOND
 from ..backends.base import BackendUnavailable
-from ..backends.sources import cached_sources
+from ..widgets.refresh_select import remember_bag
 from .settings import AudioReceiveSettings
 
 _RETRY_AFTER = 2.0  # seconds between attempts to reach a source that was not there
@@ -72,7 +72,7 @@ class ReceiveAudioEmitNode(BaseNode):
         self.hb_thread: threading.Thread | None = None
         self.hb_stop = threading.Event()
         self.hb_lock = threading.Lock()
-        cached_sources(str(self.stream.backend))  # start looking before the source list opens
+        remember_bag(self.stream, "source")  # the Source dropdown's refresh needs the Backend
 
     def on_shutdown(self, context: ExecutionContext) -> None:
         self.hb_stop_receiving()
@@ -100,7 +100,7 @@ class ReceiveAudioEmitNode(BaseNode):
             self.hb_stop = threading.Event()
             self.hb_thread = threading.Thread(
                 target=self.hb_loop,
-                args=(context, self.hb_stop, backend_key, str(self.stream.source)),
+                args=(context, self.hb_stop),
                 name=f"ReceiveAudioEmit-{self.node_id}",
                 daemon=True,
             )
@@ -127,31 +127,43 @@ class ReceiveAudioEmitNode(BaseNode):
         if thread is not None and thread is not threading.current_thread():
             thread.join(timeout=5.0)
 
-    def hb_loop(
-        self, context: ExecutionContext, stop: threading.Event, backend_key: str, source: str
-    ) -> None:
-        """Receiver thread: connect (retrying), then emit one callback per received block."""
-        backend = get_backend(backend_key)
+    def hb_loop(self, context: ExecutionContext, stop: threading.Event) -> None:
+        """Receiver thread: connect (retrying), then emit one callback per received block.
+
+        Backend and Source are read on every pass, so changing either while running reconnects.
+        """
         receiver = None
+        connected: tuple[str, str] | None = None
         number = 0
         first_ticks: int | None = None
         started = time.monotonic()
         try:
             while not stop.is_set():
+                key = (str(self.stream.backend), str(self.stream.source))
+                if receiver is not None and key != connected:
+                    receiver.close()
+                    receiver, connected = None, None
                 if receiver is None:
+                    backend_key, source = key
                     if not source:
                         set_status(self, "No source set")
                         stop.wait(_RETRY_AFTER)
                         continue
                     set_status(self, f"Connecting to {source}...")
-                    candidate = backend.create_audio_receiver(source)
+                    try:
+                        candidate = get_backend(backend_key).create_audio_receiver(source)
+                    except BackendUnavailable as exc:
+                        set_status(self, f"Error: {exc}")
+                        stop.wait(_RETRY_AFTER)
+                        continue
                     try:
                         candidate.open(timeout=0.5)
                     except LookupError:
                         candidate.close()
                         stop.wait(_RETRY_AFTER)
                         continue
-                    receiver = candidate
+                    receiver, connected = candidate, key
+                    first_ticks = None  # a new sender has its own clock
                     set_status(self, f"Receiving {source}")
                 packet = receiver.receive_audio(_POLL_WAIT)
                 if packet is None:
@@ -166,8 +178,6 @@ class ReceiveAudioEmitNode(BaseNode):
                     context, self.value("callbacks"), packet_to_block(packet), number, seconds
                 )
                 number += 1
-        except BackendUnavailable as exc:
-            set_status(self, f"Error: {exc}")
         except Exception as exc:  # the thread must not die silently
             set_status(self, f"Receive error: {exc}")
         finally:

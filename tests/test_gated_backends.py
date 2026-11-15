@@ -140,12 +140,35 @@ def _fake_syphon(monkeypatch):
         def postNotificationName_object_userInfo_deliverImmediately_(self, name, obj, info, now):
             calls.setdefault("announced", []).append((name, obj))
 
+    class ProcessInfo:
+        def setProcessName_(self, name):
+            calls["process_name"] = name
+
+    class Client:
+        has_new_frame = True
+        new_frame_image = Texture(2, 1)
+
+        def __init__(self, description):
+            calls["client"] = description
+
+        def stop(self):
+            calls["client_stopped"] = True
+
     foundation = types.ModuleType("Foundation")
     foundation.NSDistributedNotificationCenter = types.SimpleNamespace(defaultCenter=Center)
+    foundation.NSProcessInfo = types.SimpleNamespace(processInfo=ProcessInfo)
+    metal = types.ModuleType("Metal")
+    metal.MTLPixelFormatBGRA8Unorm = 80
+    Texture.pixelFormat = lambda self: 80
+    syphon.SyphonMetalClient = Client
     syphon.SyphonMetalServer, syphon.SyphonServerDirectory = Server, Directory
     utils = types.ModuleType("syphon.utils")
     np_mod = types.ModuleType("syphon.utils.numpy")
     np_mod.copy_image_to_mtl_texture = lambda image, tex: calls.setdefault("copied", image.shape)
+    # BGRA, bottom row first, as Syphon's surfaces hold it: a blue bottom row under a red top row.
+    np_mod.copy_mtl_texture_to_image = lambda tex: np.array(
+        [[[255, 0, 0, 255]], [[0, 0, 255, 255]]], np.uint8
+    )
     raw = types.ModuleType("syphon.utils.raw")
     raw.create_mtl_texture = lambda device, w, h: Texture(w, h)
     for name, m in (
@@ -154,6 +177,7 @@ def _fake_syphon(monkeypatch):
         ("syphon.utils.numpy", np_mod),
         ("syphon.utils.raw", raw),
         ("Foundation", foundation),
+        ("Metal", metal),
     ):
         monkeypatch.setitem(sys.modules, name, m)
     monkeypatch.setattr(get_backend("syphon"), "platforms", ("linux", "darwin"))
@@ -169,9 +193,18 @@ def test_syphon_send_and_discover_with_fake_native(monkeypatch):
         sender.send(np.zeros((4, 6, 4), np.uint8))
     assert calls["server"] == "pub"
     assert calls["copied"] == (4, 6, 4)
-    assert calls["published"][0] == (6, 4, [6, 4], True)
+    assert calls["published"][0] == (6, 4, [6, 4], True)  # Syphon surfaces are bottom row first
+    assert calls["process_name"] == "haywire"  # Syphon lists the server as "haywire | pub"
     assert calls["stopped"] and calls["directory_closed"]
     assert "announced" not in calls  # the server announced itself; re-announce is rate-limited
+
+
+def test_syphon_sender_flip_uses_the_native_flag(monkeypatch):
+    calls = _fake_syphon(monkeypatch)
+    with get_backend("syphon").create_sender("pub") as sender:
+        sender.flip = True
+        sender.send(np.zeros((4, 6, 4), np.uint8))
+    assert calls["published"][0][3] is False
 
 
 def test_syphon_sender_reannounces_without_a_main_run_loop(monkeypatch):
@@ -181,6 +214,19 @@ def test_syphon_sender_reannounces_without_a_main_run_loop(monkeypatch):
         sender.send(np.zeros((4, 6, 4), np.uint8))
         sender.send(np.zeros((4, 6, 4), np.uint8))
     assert calls["announced"] == [("info.v002.Syphon.ServerAnnounce", "uuid-1")]
+
+
+def test_syphon_receiver_returns_rgba(monkeypatch):
+    calls = _fake_syphon(monkeypatch)
+    receiver = get_backend("syphon").create_receiver("App | Out")
+    receiver.open()
+    frame = receiver.poll()
+    receiver.flip = True
+    flipped = receiver.poll()
+    receiver.close()
+    assert frame.pixels.tolist() == [[[255, 0, 0, 255]], [[0, 0, 255, 255]]]  # RGBA, red on top
+    assert flipped.pixels.tolist() == [[[0, 0, 255, 255]], [[255, 0, 0, 255]]]
+    assert calls["client_stopped"] and calls["directory_closed"]
 
 
 def test_gated_factories_raise_when_dependency_missing(monkeypatch):

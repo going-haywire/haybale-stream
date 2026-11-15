@@ -89,3 +89,30 @@ def test_loopback_roundtrip_and_resize(key):
             px = frame.pixels[12, 16].astype(int)
             blue = px[2] if backend.channel_order == "rgba" else px[0]
             assert blue > 150
+
+
+def test_clocked_sender_flips_with_numpy():
+    from haybale_stream.backends.base import ClockedSender
+
+    written: list[np.ndarray] = []
+
+    class Recorder(ClockedSender):
+        def _open_native(self):
+            pass
+
+        def _write(self, pixels, frame_rate):
+            written.append(pixels)
+
+        def _close_native(self):
+            pass
+
+    frame = np.zeros((2, 1, 4), np.uint8)
+    frame[0] = 255  # white top row
+    with Recorder("rec") as sender:
+        sender.flip = True
+        sender.send(frame)
+        deadline = time.monotonic() + 2
+        while not written and time.monotonic() < deadline:
+            time.sleep(0.01)
+    assert written[0][1].tolist() == [[255, 255, 255, 255]]  # the top row is now at the bottom
+    assert written[0].flags.c_contiguous

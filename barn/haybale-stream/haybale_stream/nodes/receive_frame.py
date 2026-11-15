@@ -9,7 +9,7 @@ from haywire.core.settings import bag
 from ..backends import Receiver, get_backend
 from ..backends.base import BackendUnavailable
 from ..backends.convert import frame_to_image
-from ..backends.sources import cached_sources
+from ..widgets.refresh_select import remember_bag
 from .run_loop import ensure_main_run_loop
 from .settings import ReceiveSettings
 
@@ -32,9 +32,11 @@ class ReceiveFrameNode(BaseNode):
 
     - `Backend`: NDI and OMT run on every platform; Syphon only on macOS, Spout only
       on Windows.
-    - `Source`: pick a sender found on the selected `Backend` (the list is read again
-      each time it opens) or type its name. A source that is not there
-      yet is retried every two seconds while the node runs.
+    - `Source`: click the refresh button to look for senders on the selected `Backend`,
+      then pick one, or type its name. A source that is not there yet is retried every
+      two seconds while the node runs.
+    - `Flip vertically`: turn the frames upside down, for a sender that sends them the
+      wrong way up.
 
     ```text
     Receive Frame → View Image
@@ -56,7 +58,7 @@ class ReceiveFrameNode(BaseNode):
         self.hb_receiver: Receiver | None = None
         self.hb_receiver_key: tuple[str, str] | None = None
         self.hb_retry_at = 0.0
-        cached_sources(str(self.stream.backend))  # start looking before the source list opens
+        remember_bag(self.stream, "source")  # the Source dropdown's refresh needs the Backend
 
     def on_shutdown(self, context: ExecutionContext) -> None:
         self.hb_close()
@@ -93,7 +95,10 @@ class ReceiveFrameNode(BaseNode):
             receiver = self.hb_ensure_receiver()
         except BackendUnavailable as exc:
             raise RuntimeError(str(exc)) from exc
-        frame = None if receiver is None else receiver.poll()
+        if receiver is None:
+            return "none"
+        receiver.flip = bool(self.stream.flip)
+        frame = receiver.poll()
         if frame is None:
             return "none"
         self.out("image", frame_to_image(frame, backend))

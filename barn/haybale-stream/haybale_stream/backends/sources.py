@@ -1,55 +1,48 @@
-"""Non-blocking source lists for UI dropdowns.
+"""Source lists for UI dropdowns: what the last query found, and the query itself.
 
-Discovery can take seconds (NDI, OMT wait for the network), and a dropdown is built on the
-UI thread. ``cached_sources`` returns what was last found and refreshes in the background.
+Discovery can take seconds (NDI, OMT wait for the network), so it runs only when asked
+(``find_sources``, behind the dropdown's refresh button, off the UI thread). Building or
+opening a dropdown reads ``known_sources``, which never touches the network.
 """
 
 from __future__ import annotations
 
 import logging
 import threading
-import time
 
 from . import BACKENDS
 
 log = logging.getLogger(__name__)
 
-_REFRESH_EVERY = 3.0
 _lock = threading.Lock()
-_cache: dict[str, list[str]] = {}
-_stamp: dict[str, float] = {}
-_running: set[str] = set()
+_found: dict[str, list[str]] = {}
 
 
-def _refresh(key: str) -> None:
-    try:
-        found = BACKENDS[key].discover(wait=1.0)
-    except Exception:
-        log.debug("discovery failed for %s", key, exc_info=True)
-        found = []
+def known_sources(key: str) -> list[str]:
+    """Sources the last ``find_sources(key)`` found (``[]`` before the first query)."""
     with _lock:
-        _cache[key] = found
-        _stamp[key] = time.monotonic()
-        _running.discard(key)
+        return list(_found.get(key, []))
 
 
-def cached_sources(key: str) -> list[str]:
-    """Sources last seen on backend ``key`` (``[]`` until the first refresh finishes)."""
+def find_sources(key: str, wait: float = 1.0) -> list[str]:
+    """Query backend ``key`` for its sources now (blocks up to about ``wait`` s) and remember them."""
     backend = BACKENDS.get(key)
     if backend is None or not backend.is_available():
         return []
+    try:
+        found = backend.discover(wait=wait)
+    except Exception:
+        log.warning("discovery failed for %s", key, exc_info=True)
+        return known_sources(key)
     with _lock:
-        stale = time.monotonic() - _stamp.get(key, float("-inf")) > _REFRESH_EVERY
-        if stale and key not in _running:
-            _running.add(key)
-            threading.Thread(target=_refresh, args=(key,), name=f"hb-discover-{key}", daemon=True).start()
-        return list(_cache.get(key, []))
+        _found[key] = list(found)
+    return list(found)
 
 
-def all_cached_sources() -> list[str]:
-    """Sources from every runnable backend, de-duplicated, for a backend-agnostic dropdown."""
+def all_known_sources() -> list[str]:
+    """Sources last found on every backend, de-duplicated, for a backend-agnostic dropdown."""
     seen: dict[str, None] = {}
     for key in BACKENDS:
-        for name in cached_sources(key):
+        for name in known_sources(key):
             seen.setdefault(name)
     return list(seen)

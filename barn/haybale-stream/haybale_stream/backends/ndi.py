@@ -7,7 +7,7 @@ from fractions import Fraction
 
 import numpy as np
 
-from .base import Backend, BackendUnavailable, ClockedSender, Frame, Receiver, Sender
+from .base import Backend, BackendUnavailable, ClockedSender, Frame, Receiver, Sender, flip_rows
 
 
 class NDISender(ClockedSender):
@@ -104,7 +104,7 @@ class NDIReceiver(Receiver):
                     self._last_ts = ts
                     width, height = video.get_resolution()
                     pixels = np.array(video.get_array(), dtype=np.uint8).reshape(height, width, 4)
-                    return Frame(pixels, ts)
+                    return Frame(flip_rows(pixels) if self.flip else pixels, ts)
             if time.monotonic() >= deadline:
                 return None
             time.sleep(0.005)

@@ -80,5 +80,6 @@ class SendFrameNode(BaseNode):
             sender = self.hb_ensure_sender()
         except BackendUnavailable as exc:
             raise RuntimeError(str(exc)) from exc
+        sender.flip = bool(self.stream.flip)
         sender.send(image_to_pixels(image, backend.channel_order), float(self.stream.frame_rate))
         return "next"

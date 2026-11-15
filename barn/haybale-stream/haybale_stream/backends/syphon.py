@@ -6,6 +6,9 @@ platform. Frames cross the CPU (numpy <-> MTLTexture) because haywire images
 live in system memory; a zero-copy GPU path would need a GPU image type.
 
 Server names are shown as ``"<app> | <name>"`` (just ``"<app>"`` when the server is unnamed).
+Syphon takes the app name from the process name, which for haywire is ``Python``; opening a
+sender renames the process to ``haywire`` (for good: Syphon reads the name again whenever it
+re-describes the server).
 
 Discovery runs over distributed notifications, which macOS delivers only while the main
 thread's run loop runs. haywire's main thread runs asyncio, so the host must call
@@ -17,6 +20,7 @@ server. The sender also re-posts its own announcement each second, so clients st
 from __future__ import annotations
 
 import time
+from typing import Any
 
 import numpy as np
 
@@ -25,6 +29,7 @@ from .base import Backend, BackendUnavailable, Frame, Receiver, Sender
 # The framework's distributed (cross-process) name, not the local SyphonServerAnnounceNotification.
 _ANNOUNCE = "info.v002.Syphon.ServerAnnounce"
 _ANNOUNCE_INTERVAL = 1.0
+_APP_NAME = "haywire"
 
 
 def pump_main_run_loop() -> None:
@@ -46,15 +51,16 @@ def _title(server: object) -> str:
 class SyphonSender(Sender):
     def __init__(self, name: str) -> None:
         super().__init__(name)
-        self._server = None
-        self._center = None
+        self._server: Any = None
+        self._center: Any = None
         self._texture = None
         self._announced = 0.0
 
     def open(self) -> None:
         import syphon
-        from Foundation import NSDistributedNotificationCenter
+        from Foundation import NSDistributedNotificationCenter, NSProcessInfo
 
+        NSProcessInfo.processInfo().setProcessName_(_APP_NAME)
         self._server = syphon.SyphonMetalServer(self.name)
         self._center = NSDistributedNotificationCenter.defaultCenter()
         self._announced = time.monotonic()  # the server announced itself on creation
@@ -69,8 +75,8 @@ class SyphonSender(Sender):
         if self._texture is None or self._texture.width() != width or self._texture.height() != height:
             self._texture = create_mtl_texture(self._server.device, width, height)
         copy_image_to_mtl_texture(np.ascontiguousarray(pixels, dtype=np.uint8), self._texture)
-        # Metal textures, like numpy rows, start at the top-left: flipped=True in Syphon terms.
-        self._server.publish_frame_texture(self._texture, size=[width, height], is_flipped=True)
+        # Syphon surfaces are bottom row first (OpenGL), so a top-down texture is published flipped.
+        self._server.publish_frame_texture(self._texture, size=[width, height], is_flipped=not self.flip)
         self._announce()
 
     def _announce(self) -> None:
@@ -119,8 +125,14 @@ class SyphonReceiver(Receiver):
         self._directory.update_run_loop()
         if not client.has_new_frame:
             return None
+        import Metal
+
         texture = client.new_frame_image
-        return Frame(np.array(copy_mtl_texture_to_image(texture), dtype=np.uint8))
+        pixels = copy_mtl_texture_to_image(texture)
+        # Syphon surfaces are BGRA, bottom row first: one copy turns them RGBA and top row first.
+        rows = slice(None) if self.flip else slice(None, None, -1)
+        channels = [2, 1, 0, 3] if texture.pixelFormat() == Metal.MTLPixelFormatBGRA8Unorm else [0, 1, 2, 3]
+        return Frame(np.ascontiguousarray(pixels[rows][..., channels]))
 
     def close(self) -> None:
         client, self._client = self._client, None

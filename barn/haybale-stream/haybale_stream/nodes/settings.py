@@ -1,28 +1,37 @@
 """Settings shared by the stream nodes."""
 
 from haywire.barn.builtin.types import BOOL, CHOICES, FLOAT, INT, STRING
-from haywire.barn.builtin.widgets import SelectWidget
 from haywire.core.settings import NodeSettings, setting
 
 from ..backends import BACKENDS, audio_backends, available_backends
-from ..backends.sources import all_cached_sources, cached_sources
+from ..backends.sources import all_known_sources, find_sources, known_sources
+from ..widgets.refresh_select import RefreshSelectWidget
 from .run_loop import ensure_main_run_loop
 
 
 def source_options(bag: "ReceiveSettings | None" = None) -> list[str]:
-    """Senders found on the bag's backend; on every runnable backend without a bag.
+    """Senders the last refresh found on the bag's backend; on every backend without a bag.
 
     The default keeps this working with a framework that calls options without the bag.
     """
-    if bag is None:
-        return all_cached_sources()
-    ensure_main_run_loop(str(bag.backend))
-    return cached_sources(str(bag.backend))
+    return all_known_sources() if bag is None else known_sources(str(bag.backend))
+
+
+def find_source_options(bag: "ReceiveSettings | None" = None) -> list[str]:
+    """Query the bag's backend for senders now (the Source dropdown's refresh button)."""
+    key = "ndi" if bag is None else str(bag.backend)
+    ensure_main_run_loop(key)
+    return find_sources(key)
 
 
 def audio_source_options(bag: "AudioReceiveSettings | None" = None) -> list[str]:
-    """Audio senders found on the bag's backend (OMT without a bag)."""
-    return cached_sources("omt" if bag is None else str(bag.backend))
+    """Audio senders the last refresh found on the bag's backend (OMT without a bag)."""
+    return known_sources("omt" if bag is None else str(bag.backend))
+
+
+def find_audio_source_options(bag: "AudioReceiveSettings | None" = None) -> list[str]:
+    """Query the bag's backend for audio senders now (the Source dropdown's refresh button)."""
+    return find_sources("omt" if bag is None else str(bag.backend))
 
 
 def backend_options() -> list[str]:
@@ -60,6 +69,12 @@ class SendSettings(NodeSettings):
         category="Stream",
         description="Keep resending the last frame while no new one arrives (NDI, OMT)",
     )
+    flip = setting[BOOL](
+        False,
+        label="Flip vertically",
+        category="Stream",
+        description="Send the image upside down, for receivers that show it the wrong way up",
+    )
 
 
 class ReceiveSettings(NodeSettings):
@@ -76,8 +91,20 @@ class ReceiveSettings(NodeSettings):
         "",
         label="Source",
         category="Stream",
-        description="Name of the sender to receive from; pick a discovered one or type it",
-        widget=SelectWidget.config(properties={"options": source_options, "new_value_mode": "add-unique"}),
+        description="Name of the sender to receive from; refresh to look for senders, or type it",
+        widget=RefreshSelectWidget.config(
+            properties={
+                "options": source_options,
+                "refresh": find_source_options,
+                "new_value_mode": "add-unique",
+            }
+        ),
+    )
+    flip = setting[BOOL](
+        False,
+        label="Flip vertically",
+        category="Stream",
+        description="Turn received frames upside down, for senders that send them the wrong way up",
     )
 
 
@@ -126,8 +153,12 @@ class AudioReceiveSettings(NodeSettings):
         "",
         label="Source",
         category="Stream",
-        description="Name of the sender to receive from; pick a discovered one or type it",
-        widget=SelectWidget.config(
-            properties={"options": audio_source_options, "new_value_mode": "add-unique"}
+        description="Name of the sender to receive from; refresh to look for senders, or type it",
+        widget=RefreshSelectWidget.config(
+            properties={
+                "options": audio_source_options,
+                "refresh": find_audio_source_options,
+                "new_value_mode": "add-unique",
+            }
         ),
     )

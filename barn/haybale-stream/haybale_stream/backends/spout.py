@@ -31,8 +31,8 @@ class SpoutSender(Sender):
             return
         height, width = pixels.shape[:2]
         data = np.ascontiguousarray(pixels, dtype=np.uint8)
-        # invert=False: numpy rows run top to bottom, which is what Spout receivers expect.
-        if self._sender.sendImage(data.reshape(-1), width, height, SpoutGL.enums.GL_RGBA, False, 0):
+        # numpy rows run top to bottom, which is what Spout receivers expect; invert flips.
+        if self._sender.sendImage(data.reshape(-1), width, height, SpoutGL.enums.GL_RGBA, self.flip, 0):
             self._sender.setFrameSync(self.name)
 
     def close(self) -> None:
@@ -60,7 +60,7 @@ class SpoutReceiver(Receiver):
         receiver = self._receiver
         if receiver is None:
             return None
-        ok = receiver.receiveImage(self._buffer, SpoutGL.enums.GL_RGBA, False, 0)
+        ok = receiver.receiveImage(self._buffer, SpoutGL.enums.GL_RGBA, self.flip, 0)
         if receiver.isUpdated():  # first connection, or the sender changed size
             self._size = (receiver.getSenderWidth(), receiver.getSenderHeight())
             self._buffer = bytearray(self._size[0] * self._size[1] * 4)
