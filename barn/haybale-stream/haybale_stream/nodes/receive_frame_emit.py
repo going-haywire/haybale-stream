@@ -10,7 +10,6 @@ from haywire.core.settings import bag
 from ..backends import get_backend
 from ..backends.base import BackendUnavailable
 from ..backends.convert import frame_to_image
-from ..widgets.refresh_select import remember_bag
 from .run_loop import ensure_main_run_loop
 from .settings import ReceiveSettings
 
@@ -68,7 +67,6 @@ class ReceiveFrameEmitNode(BaseNode):
         self.hb_thread: threading.Thread | None = None
         self.hb_stop = threading.Event()
         self.hb_lock = threading.Lock()
-        remember_bag(self.stream, "source")  # the Source dropdown's refresh needs the Backend
 
     def on_shutdown(self, context: ExecutionContext) -> None:
         self.hb_stop_receiving()

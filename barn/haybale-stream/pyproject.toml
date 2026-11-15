@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "haybale-audio>=0.4.1",
     "haybale-image>=0.3.4",
-    "haywire-core>=0.3.0",
+    "haywire-core>=0.5.0",
     "numpy",
     # NDI and OMT wheels bundle their native libraries on Linux, macOS and Windows.
     "cyndilib>=0.1.3",
