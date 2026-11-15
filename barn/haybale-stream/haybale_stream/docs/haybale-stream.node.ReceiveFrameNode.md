@@ -18,7 +18,8 @@ Receives the newest image from another application over NDI, OMT, Syphon or Spou
 | name | bag | default | description |
 |---|---|---|---|
 | `backend` | stream | `'ndi'` | Transport to receive from |
-| `source` | stream | `''` | Name of the sender to receive from; pick a discovered one or type it |
+| `source` | stream | `''` | Name of the sender to receive from; refresh to look for senders, or type it |
+| `flip` | stream | `False` | Turn received frames upside down, for senders that send them the wrong way up |
 
 ## Notes
 
@@ -30,8 +31,11 @@ last frame received, so a downstream node never sees an empty image after the fi
 
 - `Backend`: NDI and OMT run on every platform; Syphon only on macOS, Spout only
   on Windows.
-- `Source`: pick a discovered sender or type its name. A source that is not there
-  yet is retried every two seconds while the node runs.
+- `Source`: click the refresh button to look for senders on the selected `Backend`,
+  then pick one, or type its name. A source that is not there yet is retried every
+  two seconds while the node runs.
+- `Flip vertically`: turn the frames upside down, for a sender that sends them the
+  wrong way up.
 
 ```text
 Receive Frame → View Image

@@ -20,7 +20,8 @@ Receives frames from NDI, OMT, Syphon or Spout on its own thread and emits a cal
 | name | bag | default | description |
 |---|---|---|---|
 | `backend` | stream | `'ndi'` | Transport to receive from |
-| `source` | stream | `''` | Name of the sender to receive from; pick a discovered one or type it |
+| `source` | stream | `''` | Name of the sender to receive from; refresh to look for senders, or type it |
+| `flip` | stream | `False` | Turn received frames upside down, for senders that send them the wrong way up |
 
 ## Notes
 

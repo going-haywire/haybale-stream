@@ -20,7 +20,7 @@ Receives audio from an OMT source on its own thread and emits a callback per blo
 | name | bag | default | description |
 |---|---|---|---|
 | `backend` | stream | `'omt'` | Transport to receive from |
-| `source` | stream | `''` | Name of the sender to receive from; pick a discovered one or type it |
+| `source` | stream | `''` | Name of the sender to receive from; refresh to look for senders, or type it |
 
 ## Notes
 

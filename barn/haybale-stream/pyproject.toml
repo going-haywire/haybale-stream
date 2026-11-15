@@ -1,6 +1,6 @@
 [project]
 name = "haybale-stream"
-version = "0.1.2"
+version = "0.2.0"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -15,6 +15,7 @@ dependencies = [
     "SpoutGL>=0.1.1; sys_platform == 'win32'",
     "syphon-python>=0.2.0; sys_platform == 'darwin'",
     "haybale-core",
+    "nicegui",
 ]
 description = "Share video frames between applications over Syphon, Spout, NDI and OMT, and audio over OMT"
 keywords = ["video", "audio", "streaming", "syphon", "spout", "ndi", "omt", "texture sharing"]

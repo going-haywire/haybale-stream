@@ -20,6 +20,7 @@ Publishes an image to other applications over NDI, OMT, Syphon or Spout
 | `name` | stream | `'haywire'` | Name other applications see for this sender |
 | `frame_rate` | stream | `30.0` | Frame rate announced to receivers (NDI and OMT pace sending to it) |
 | `steady_stream` | stream | `True` | Keep resending the last frame while no new one arrives (NDI, OMT) |
+| `flip` | stream | `False` | Send the image upside down, for receivers that show it the wrong way up |
 
 ## Notes
 
