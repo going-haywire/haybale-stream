@@ -5,6 +5,7 @@ from pathlib import Path
 from haywire.core.library.base import BaseLibrary
 from haywire.core.library.decorator import library
 from haywire.core.node.registry import NodeRegistry
+from haywire.ui.widget.registry import WidgetRegistry
 
 
 @library(file_watcher=False)
@@ -12,8 +13,9 @@ class Library(BaseLibrary):
     """Stream library: frame and audio sharing nodes over the backends in ``haybale_stream.backends``."""
 
     def register_components(self):
-        """Register the node folder."""
+        """Register the widget and node folders."""
         base_path = Path(__file__).parent
+        self.add_folder_to_registry(folder_path=str(base_path / "widgets"), registry_cls=WidgetRegistry)
         self.add_folder_to_registry(folder_path=str(base_path / "nodes"), registry_cls=NodeRegistry)
 
     def validate(self) -> bool:

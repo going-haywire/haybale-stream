@@ -62,11 +62,21 @@ class AudioPacket:
         return int(self.samples.shape[1])
 
 
+def flip_rows(pixels: np.ndarray) -> np.ndarray:
+    """``pixels`` upside down, as a C-contiguous copy (the fallback where a backend has no flip)."""
+    return np.ascontiguousarray(pixels[::-1])
+
+
 class Sender(ABC):
-    """Publishes frames under a name that receivers discover."""
+    """Publishes frames under a name that receivers discover.
+
+    ``flip`` turns every frame upside down on the way out; it may change between frames.
+    Backends use their native flip where they have one, ``flip_rows`` otherwise.
+    """
 
     def __init__(self, name: str) -> None:
         self.name = name
+        self.flip = False
 
     @abstractmethod
     def open(self) -> None:
@@ -128,7 +138,7 @@ class ClockedSender(Sender):
     def send(self, pixels: np.ndarray, frame_rate: float = 30.0) -> None:
         # Own the bytes: the caller's array may be a read-only view of an image other nodes
         # still read, and native writers want a writable buffer. np.array always copies.
-        frame = np.array(pixels, dtype=np.uint8, order="C")
+        frame = np.array(pixels[::-1] if self.flip else pixels, dtype=np.uint8, order="C")
         with self._lock:
             self._latest = (frame, frame_rate)
         self._new.set()
@@ -159,10 +169,14 @@ class ClockedSender(Sender):
 
 
 class Receiver(ABC):
-    """Receives frames from one named source."""
+    """Receives frames from one named source.
+
+    Frames arrive top row first. ``flip`` turns them upside down; it may change between polls.
+    """
 
     def __init__(self, source: str) -> None:
         self.source = source
+        self.flip = False
 
     @abstractmethod
     def open(self, timeout: float = 5.0) -> None:

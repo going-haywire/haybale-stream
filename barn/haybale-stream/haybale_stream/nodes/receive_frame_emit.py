@@ -10,6 +10,8 @@ from haywire.core.settings import bag
 from ..backends import get_backend
 from ..backends.base import BackendUnavailable
 from ..backends.convert import frame_to_image
+from ..widgets.refresh_select import remember_bag
+from .run_loop import ensure_main_run_loop
 from .settings import ReceiveSettings
 
 _RETRY_AFTER = 2.0  # seconds between attempts to reach a source that was not there
@@ -66,6 +68,7 @@ class ReceiveFrameEmitNode(BaseNode):
         self.hb_thread: threading.Thread | None = None
         self.hb_stop = threading.Event()
         self.hb_lock = threading.Lock()
+        remember_bag(self.stream, "source")  # the Source dropdown's refresh needs the Backend
 
     def on_shutdown(self, context: ExecutionContext) -> None:
         self.hb_stop_receiving()
@@ -86,6 +89,7 @@ class ReceiveFrameEmitNode(BaseNode):
         if reason is not None:
             self.hb_status(f"Error: {reason}")
             raise RuntimeError(reason)
+        ensure_main_run_loop(backend_key)
         with self.hb_lock:
             if self.hb_thread is not None and self.hb_thread.is_alive():
                 return "started"
@@ -93,7 +97,7 @@ class ReceiveFrameEmitNode(BaseNode):
             self.hb_stop = threading.Event()
             self.hb_thread = threading.Thread(
                 target=self.hb_loop,
-                args=(context, self.hb_stop, backend_key, str(self.stream.source)),
+                args=(context, self.hb_stop),
                 name=f"ReceiveFrameEmit-{self.node_id}",
                 daemon=True,
             )
@@ -124,29 +128,45 @@ class ReceiveFrameEmitNode(BaseNode):
         subs = self.value("callbacks") or {}
         return [v.name for v in subs.values() if v is not None and v.name]
 
-    def hb_loop(self, context: ExecutionContext, stop: threading.Event, backend_key: str, source: str) -> None:
-        """Receiver thread: connect (retrying), then emit one callback per new frame."""
-        backend = get_backend(backend_key)
+    def hb_loop(self, context: ExecutionContext, stop: threading.Event) -> None:
+        """Receiver thread: connect (retrying), then emit one callback per new frame.
+
+        Backend and Source are read on every pass, so changing either while running reconnects.
+        """
         receiver = None
+        connected: tuple[str, str] | None = None
         frame_number = 0
         started = time.monotonic()
         try:
             while not stop.is_set():
+                key = (str(self.stream.backend), str(self.stream.source))
+                if receiver is not None and key != connected:
+                    receiver.close()
+                    receiver, connected = None, None
                 if receiver is None:
+                    backend_key, source = key
                     if not source:
                         self.hb_status("No source set")
                         stop.wait(_RETRY_AFTER)
                         continue
                     self.hb_status(f"Connecting to {source}...")
-                    candidate = backend.create_receiver(source)
+                    try:
+                        ensure_main_run_loop(backend_key)
+                        backend = get_backend(backend_key)
+                        candidate = backend.create_receiver(source)
+                    except BackendUnavailable as exc:
+                        self.hb_status(f"Error: {exc}")
+                        stop.wait(_RETRY_AFTER)
+                        continue
                     try:
                         candidate.open(timeout=0.5)
                     except LookupError:
                         candidate.close()
                         stop.wait(_RETRY_AFTER)
                         continue
-                    receiver = candidate
+                    receiver, connected = candidate, key
                     self.hb_status(f"Receiving {source}")
+                receiver.flip = bool(self.stream.flip)
                 frame = receiver.poll(_POLL_WAIT)
                 if frame is None:
                     continue
@@ -161,8 +181,6 @@ class ReceiveFrameEmitNode(BaseNode):
                 }
                 for name in subscribers:
                     context.emit_callback(event_name=name, payload=payload)
-        except BackendUnavailable as exc:
-            self.hb_status(f"Error: {exc}")
         except Exception as exc:  # the thread must not die silently
             self.hb_status(f"Receive error: {exc}")
         finally:

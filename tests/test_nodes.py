@@ -181,3 +181,47 @@ def test_emit_node_delivers_frames_to_subscribers(library_system):
     finally:
         send.on_teardown()
         emit.on_teardown()
+
+
+def test_emit_node_follows_a_source_change_while_running(library_system, monkeypatch):
+    from types import SimpleNamespace
+
+    from haybale_stream.backends.base import Frame
+    from haybale_stream.nodes import ReceiveFrameEmitNode, receive_frame_emit
+
+    opened: list[str] = []
+    closed: list[str] = []
+
+    class Receiver:
+        def __init__(self, source):
+            self.source = source
+
+        def open(self, timeout=0.0):
+            opened.append(self.source)
+
+        def poll(self, timeout=0.0):
+            time.sleep(0.01)
+            return Frame(np.zeros((2, 2, 4), np.uint8))
+
+        def close(self):
+            closed.append(self.source)
+
+    fake = SimpleNamespace(unavailable_reason=lambda: None, create_receiver=Receiver, channel_order="rgba")
+    monkeypatch.setattr(receive_frame_emit, "get_backend", lambda key: fake)
+    emit = _build(ReceiveFrameEmitNode)
+    emit.stream.source = "first"
+    emit.value = lambda port: {}
+    context = SimpleNamespace(control_pin="start", emit_callback=lambda **kw: None)
+    try:
+        assert emit.worker(context) == "started"
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline and opened != ["first"]:
+            time.sleep(0.01)
+        emit.stream.source = "second"
+        while time.monotonic() < deadline and opened != ["first", "second"]:
+            time.sleep(0.01)
+        assert opened == ["first", "second"]
+        assert closed == ["first"]
+    finally:
+        emit.on_teardown()
+    assert closed == ["first", "second"]
