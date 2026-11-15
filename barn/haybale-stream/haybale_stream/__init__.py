@@ -2,10 +2,7 @@
 
 from pathlib import Path
 
-from haywire.core.library.base import BaseLibrary
-from haywire.core.library.decorator import library
-from haywire.core.node.registry import NodeRegistry
-from haywire.ui.widget.registry import WidgetRegistry
+from haywire.api import BaseLibrary, NodeRegistry, WidgetRegistry, library
 
 
 @library(file_watcher=False)
