@@ -72,19 +72,29 @@ These apply when editing this library; the long-form versions live in the monore
   `docs/architecture/sharing/share-pipeline-arch.md` if needed).
 - If a dependency pin needs a version that is not released yet, stop and ask.
 
-## Release-gated issues
+## Release reminders
 
-Two GitHub labels track work tied to a release:
+([sharing-libraries §7.1](https://github.com/going-haywire/haywire/blob/master/docs/guides/sharing-libraries.md#71-release-reminders))
 
-- `todo-pre-release`: must be done before this library is released. Before
-  `haywire share` (also before `--dry-run`), run
-  `gh issue list --label todo-pre-release --state open`. If any are open, list them,
-  stop and ask; do not release until they are closed.
-- `after-core-release`: can be done only once a haywire-core release contains a change
-  (e.g. raising the core floor). At the start of a session here, run
-  `gh issue list --label after-core-release --state open`; for each, check whether
-  PyPI's latest `haywire-core` contains the commit the issue names, and tell the user
-  which can now proceed.
+A release reminder is an issue that records a decision affecting the next release, so it is not forgotten. It is a help, not a rule: open one only when the owner agrees. When a change you make needs something done at release time (most often a dependency floor to raise once a release contains a change), propose the issue to the owner: its title, the label, the steps, and for `after-core-release` a first line `Waits for: going-haywire/haywire@<sha> (#<pr>)`. Link a prepared branch's draft PR to it.
 
-When work is blocked on an unreleased core change, open an `after-core-release` issue
-naming the core commit or PR, and link the prepared branch's draft PR to it.
+| Label | Meaning | Read |
+|---|---|---|
+| `todo-pre-release` | Something the owner decided to do before the next release of this project. | Before `haywire share`, `--dry-run` included: `gh issue list --label todo-pre-release --state open`. If any are open, list them and ask the owner whether to release anyway. |
+| `after-core-release` | A dependency to raise (usually the `haywire-core` floor) once a released haywire-core contains the change on the issue's `Waits for:` line. | At the start of a session: `gh issue list --label after-core-release --state open`; check each one as below and tell the owner which can now be done. |
+
+The change on a `Waits for:` line is released when the latest haywire-core on PyPI contains the commit:
+
+```sh
+v=$(curl -s https://pypi.org/pypi/haywire-core/json | jq -r .info.version)
+gh api "repos/going-haywire/haywire/compare/v$v...<sha>" --jq .status  # behind or identical: released
+```
+
+Create the labels when the owner agrees to the first reminder (safe to repeat):
+
+```sh
+gh label create todo-pre-release --color D93F0B --description "Reminder: to do before the next release" --force
+gh label create after-core-release --color FBCA04 --description "Reminder: to do once a haywire-core release contains the needed change" --force
+```
+
+If `gh` is missing or not logged in, or the repository is not on GitHub, tell the owner the reminders could not be read; never report that none are open.
