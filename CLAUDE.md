@@ -71,3 +71,20 @@ These apply when editing this library; the long-form versions live in the monore
 - Before releasing, read `../haywire-repo/docs/guides/sharing-libraries.md` (and
   `docs/architecture/sharing/share-pipeline-arch.md` if needed).
 - If a dependency pin needs a version that is not released yet, stop and ask.
+
+## Release-gated issues
+
+Two GitHub labels track work tied to a release:
+
+- `todo-pre-release`: must be done before this library is released. Before
+  `haywire share` (also before `--dry-run`), run
+  `gh issue list --label todo-pre-release --state open`. If any are open, list them,
+  stop and ask; do not release until they are closed.
+- `after-core-release`: can be done only once a haywire-core release contains a change
+  (e.g. raising the core floor). At the start of a session here, run
+  `gh issue list --label after-core-release --state open`; for each, check whether
+  PyPI's latest `haywire-core` contains the commit the issue names, and tell the user
+  which can now proceed.
+
+When work is blocked on an unreleased core change, open an `after-core-release` issue
+naming the core commit or PR, and link the prepared branch's draft PR to it.
