@@ -70,7 +70,7 @@ def _fake_spout(monkeypatch):
 
     mod.SpoutSender, mod.SpoutReceiver = SpoutSender, SpoutReceiver
     monkeypatch.setitem(sys.modules, "SpoutGL", mod)
-    monkeypatch.setattr(get_backend("spout"), "platforms", ("linux", "win32"))
+    monkeypatch.setattr(get_backend("spout"), "platforms", (sys.platform,))
     return calls
 
 
@@ -180,7 +180,7 @@ def _fake_syphon(monkeypatch):
         ("Metal", metal),
     ):
         monkeypatch.setitem(sys.modules, name, m)
-    monkeypatch.setattr(get_backend("syphon"), "platforms", ("linux", "darwin"))
+    monkeypatch.setattr(get_backend("syphon"), "platforms", (sys.platform,))
     return calls
 
 
@@ -231,6 +231,6 @@ def test_syphon_receiver_returns_rgba(monkeypatch):
 
 def test_gated_factories_raise_when_dependency_missing(monkeypatch):
     monkeypatch.setitem(sys.modules, "SpoutGL", None)  # import -> ImportError
-    monkeypatch.setattr(get_backend("spout"), "platforms", ("linux", "win32"))
+    monkeypatch.setattr(get_backend("spout"), "platforms", (sys.platform,))
     with pytest.raises(BackendUnavailable, match="SpoutGL"):
         get_backend("spout").create_sender("x")

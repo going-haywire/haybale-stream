@@ -22,7 +22,11 @@ def _rendered(properties: dict[str, Any], bag: Any = None):
     bag = bag if bag is not None else ReceiveSettings(registry=SettingsRegistry())
     cell = bag._cell_for(type(bag)._settings_descriptors()["source"])
     model = SettingWidgetModel(
-        field_id="source", widget_config={"properties": properties}, cell=cell, on_edit=cell.set_value, settings=bag
+        field_id="source",
+        widget_config={"properties": properties},
+        cell=cell,
+        on_edit=cell.set_value,
+        settings=bag,
     )
     widget = SelectWidget(model)
     client = Client(cast(Any, _noop_page), request=None)
