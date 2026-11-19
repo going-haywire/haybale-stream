@@ -1,87 +1,90 @@
-# haybale-stream — orientation for Claude
+# Haybale Stream
 
-This repo is a **haybale library** (a plugin) for the **haywire** visual-programming
-framework. It wraps NDI, OMT, Syphon and Spout as haywire
-types, nodes, widgets, and renderers. It is *not* the framework itself — the framework
-lives in a separate monorepo.
+A haywire project (`haybale-stream`): one haybale library under `barn/`, released with `haywire share`.
 
-## Develop from the monorepo, not from here
+## Working in this repository
 
-The framework monorepo sits next to this repo and **symlinks this repo's package into
-its `barn/`**, so the same source files are editable from both sides:
+This is a going-haywire library and follows core's process: branches and pull requests,
+CI before every merge, a protected `main`, releases through a release pull request. The
+rules are in the org's [CONTRIBUTING.md](https://github.com/going-haywire/.github/blob/main/CONTRIBUTING.md)
+and core's [CONTRIBUTING.md](https://github.com/going-haywire/haywire/blob/master/CONTRIBUTING.md);
+the step-by-step is the `haywire-workflow` skill, which comes with its hooks in the
+`haywire-dev` plugin. `.claude/settings.json` enables it; install it once per clone, or
+this session runs without the skill and without the hooks that guard git and merges:
 
+```sh
+claude plugin marketplace add going-haywire/.github   # once per machine
+claude plugin install haywire-dev@going-haywire --scope project
 ```
-haywire/
-├── haywire-repo/                       ← framework monorepo (docs, .codemap, .insights, skills)
-│   └── barn/haybale-stream  →  symlink to ↓
-└── haybale-stream/                ← THIS repo (own git, .venv, releases)
-    └── barn/haybale-stream/haybale_stream/   ← the actual source
-```
 
-**Prefer opening Claude sessions in `../haywire-repo`** and editing this library through
-`barn/haybale-stream/...`. There you get the framework docs, the `.codemap/` index,
-the `.insights/` traps, the `haywire-*` skills, the live framework to import against, and
-`uv run haywire` / `uv run pytest` running against the real framework. Edits there land in
-*this* repo's files via the symlink; do git operations (commit, tag, release) from here.
+Load the skill (`haywire-dev:haywire-workflow`) before the first branch, commit, push or
+`gh pr` command of any task.
 
-If you are working in this repo directly (offline, packaging, or a fresh clone), the
-authoritative framework knowledge is at:
-
-- `../haywire-repo/docs/` — component authoring guides + architecture (start here for "how do I build a node/type/widget/renderer")
-- `../haywire-repo/.codemap/INDEX.md` — repo layout map
-- `../haywire-repo/.insights/` — non-obvious bugs and framework gotchas
-- `../haywire-repo/CLAUDE.md` — framework conventions (reactive props, DI, testing rules)
-
-## This repo
-
-- Package: `haybale_stream` under `barn/haybale-stream/` (name `haybale-stream-dev` in dev).
-- `marketstall.toml` — the published library feed manifest; rewritten by `haywire share`; never hand-edited.
-- Setup, running, and sharing commands are in [README.md](README.md) — don't duplicate them here.
-
-## Rules that carry over from the framework
-
-These apply when editing this library; the long-form versions live in the monorepo:
-
-- Read a file before editing it; grep for callers before changing a function signature.
-- Follow the existing reactive-props / DI patterns — don't introduce singletons or
-  alternate registration paths. Confirm before any change to class hierarchies or DI wiring.
-- After multi-file changes, run `uv run pytest` (from the monorepo, against the live
-  framework) and confirm it passes before calling work done.
+- **Layout.** This is a development project: `[tool.uv.sources]` reaches core at
+  `../haywire-repo`, so this repository is cloned beside core. Its own environment runs its
+  tests; the full studio with every library runs from the umbrella environment
+  ([ADR 0081](https://github.com/going-haywire/haywire/blob/master/docs/adr/0081-libraries-from-other-repositories-run-from-an-umbrella-environment.md)).
+  A worktree goes beside the repositories (`git worktree add ../haybale-stream-<name>`),
+  never elsewhere, or the relative paths break.
+- **Checks** before each commit: `uv run --frozen ruff check .`, `uv run --frozen ruff
+  format --check .`, `uv run --frozen pytest`. CI runs them against core's `master` on every
+  pull request and every night.
+- **Releases** go through a release pull request: `share --bump patch --pr` (the `READY`
+  row below). Merging it is the owner's word, and the merge run tags and publishes.
 
 ## Releases
 
-- Never edit version numbers, `install_spec` or `marketstall.toml` by hand, and never
-  tag or push a release manually.
-- Release only with `uv run --frozen haywire share --bump patch|minor|major` (or an explicit `X.Y.Z`),
-  run **from this repo's root**, not from `../haywire-repo`: the CLI publishes the project in
-  the current directory. It bumps every `barn/*` library in lockstep, regenerates docs,
-  rebuilds `marketstall.toml`, then commits, tags `v<version>` and pushes to `origin` itself.
-  `--dry-run` reports what it would do and writes nothing; run it first.
-- `--frozen` matters: plain `uv run` re-locks and dirties `uv.lock`, which fails the clean-tree
-  check. If `uv.lock` is already dirty, `git checkout uv.lock` before releasing.
-- It needs a clean working tree, an `origin` remote, push credentials, and the default
-  branch checked out. `distribute = "pypi"` is set here, so the marketstall rows pin
-  `haybale-stream==<version>`.
-- You do not upload to PyPI yourself: `share` pushes the `v<version>` tag and the `publish.yml`
-  GitHub Actions workflow builds the wheel, checks that its dependencies resolve on PyPI, and uploads it. Watch it with `gh run watch`, then
-  confirm `https://pypi.org/project/haybale-stream/<version>/` returns 200. If the publish job
-  fails, fix the cause and re-run it on the same tag with `gh workflow run publish.yml --ref v<version>`;
-  do not delete or move tags yourself, ask the user. `--first-release` is only for a new package name
-  (see `publish-to-pypi.md`).
-- Before releasing, read `../haywire-repo/docs/guides/sharing-libraries.md` (and
-  `docs/architecture/sharing/share-pipeline-arch.md` if needed).
-- If a dependency pin needs a version that is not released yet, stop and ask.
+Release only with `haywire share`, from the project root. It bumps every version, writes
+`marketstall.toml` and the README subscribe link, then commits, tags and pushes by itself.
+A published version is permanent.
+
+- Always `uv run --frozen`, so `uv` does not re-lock; if `uv.lock` changed unintentionally, `git checkout uv.lock`.
+- Run `share --status` before acting, and again after any unclear result (a denial message, a timeout). The tool may have run.
+- Never run `share --bump` twice for one change.
+- Never tag, push tags, force-push, or edit versions, `install_spec` or `marketstall.toml` by hand.
+- `STOP` means stop. Do not work around it.
+
+`uv run --frozen haywire share --status` ends with a `STATE:` line. Act on it:
+
+| `STATE:` | Meaning | You do |
+|---|---|---|
+| `READY` | Everything is in order. | Run `uv run --frozen haywire share --bump patch`. Use `minor` or `major` only if the owner said so. Add `--pr` when the default branch only accepts pull requests: it opens a release PR (`RELEASE_PR_OPEN`) instead of tagging. |
+| `RELEASED` | This change is already released. | Nothing. Do not run `share` again. |
+| `NOTHING_TO_RELEASE` | Nothing under `barn/` or the root `pyproject.toml` changed since the last release. | Nothing. Commit a change first if one was intended. |
+| `BLOCKED` | A fixable problem stops the release. | Run the command on the `NEXT:` line, then `share --status` again. |
+| `NEEDS_HUMAN` | Only the owner can proceed. | Paste the whole output, checklist included, to the owner and wait. Run the `THEN:` command only after they confirm. |
+| `UNPUSHED` | A release commit exists that the remote does not have. | Run `uv run --frozen haywire share --resume` once. If it fails, stop and tell the owner. |
+| `RELEASE_PR_OPEN` | A release PR is open and not merged. | Give the owner the PR link (the `PR:` line) and wait. Do not merge it, tag, or run `share` again. |
+| `RELEASE_MERGED` | A release PR was merged and its version has no tag. | Pull the default branch, run `uv run --frozen haywire share --resume` once (it tags the merge commit and pushes the tag). If it fails, stop and tell the owner. |
+| `STALE_MARKER` | An interrupted release does not match this checkout. | Stop and tell the owner. |
+| `FAILED` | A step failed and its changes were reverted. | Read the error, fix its cause, run `share --status`. Do not retry in a loop. |
+| `USAGE` | The command line was wrong. | Fix the command; see `share --help`. |
+| `UNKNOWN` | Anything else. | Stop and paste the full output to the owner. |
+
+- If a dependency pin needs a version that is not released yet, raise its floor as the
+  release reminders section says, and ask the owner before releasing.
+- Libraries named `hay-*` are local-only and `share` refuses them. Before any graph exists,
+  the cheap fix is to create the project again with `haywire init <name> --distname
+  haybale-<name>`; afterwards `haywire rename` rewrites every graph, and the owner chooses
+  the name. Ask the owner for the name before sharing.
+- Some steps only the owner can do: creating the GitHub repository, registering a PyPI
+  pending publisher, creating the GitHub `pypi` environment. `share` prints them as a
+  checklist after `STOP: human needed`. Paste that checklist to the owner verbatim and
+  wait; never attempt them yourself.
+- Never force-push, and never delete or move a tag.
 
 ## Release reminders
 
 ([sharing-libraries §7.1](https://github.com/going-haywire/haywire/blob/master/docs/guides/sharing-libraries.md#71-release-reminders))
 
-A release reminder is an issue that records a decision affecting the next release, so it is not forgotten. It is a help, not a rule: open one only when the owner agrees. When a change you make needs something done at release time (most often a dependency floor to raise once a release contains a change), propose the issue to the owner: its title, the label, the steps, and for `after-core-release` a first line `Waits for: going-haywire/haywire@<sha> (#<pr>)`. Link a prepared branch's draft PR to it.
+A change that needs an unreleased change of a dependency raises that dependency's floor to the next patch after the dependency's latest release (`>=0.5.4` while PyPI has 0.5.3), in the same commit. `share` refuses to release while no PyPI release satisfies a floor, so the floor is the record of the wait.
+
+A release reminder is an issue for a wait no floor can record: the change has no code yet, or the project develops against PyPI core. It is a help, not a rule: open one only when the owner agrees. Propose the issue to the owner: its title, the label, the steps, and for `after-core-release` a first line `Waits for: going-haywire/haywire@<sha> (#<pr>)`. Link a prepared branch's draft PR to it.
 
 | Label | Meaning | Read |
 |---|---|---|
 | `todo-pre-release` | Something the owner decided to do before the next release of this project. | Before `haywire share`, `--dry-run` included: `gh issue list --label todo-pre-release --state open`. If any are open, list them and ask the owner whether to release anyway. |
-| `after-core-release` | A dependency to raise (usually the `haywire-core` floor) once a released haywire-core contains the change on the issue's `Waits for:` line. | At the start of a session: `gh issue list --label after-core-release --state open`; check each one as below and tell the owner which can now be done. |
+| `after-core-release` | A dependency to raise once a released haywire-core contains the change on the issue's `Waits for:` line, when no floor can record the wait yet. | At the start of a session: `gh issue list --label after-core-release --state open`; check each one as below and tell the owner which can now be done. |
 
 The change on a `Waits for:` line is released when the latest haywire-core on PyPI contains the commit:
 
@@ -98,3 +101,37 @@ gh label create after-core-release --color FBCA04 --description "Reminder: to do
 ```
 
 If `gh` is missing or not logged in, or the repository is not on GitHub, tell the owner the reminders could not be read; never report that none are open.
+
+## Live checks
+
+A live check asks the owner to confirm in the running studio (`uv run haywire`) that a
+change works. It costs their time: ask only for a change only a person can judge (UI,
+interaction, a device), only once your own tests and checks leave you confident it works,
+and only with the steps that need a person. With Farmhand connected, post those steps as a
+Questionnaire (`haybale-studio_post_questionnaire`, format:
+[questionnaire](https://github.com/going-haywire/haywire/blob/master/docs/reference/questionnaire.md)),
+then read the answers with `haybale-studio_get_findings` once the owner says they are done.
+
+## Where it publishes
+
+`haywire init` sets no `distribute`, so the default is `git`: consumers install from your
+repository's tag. `.github/workflows/publish.yml` is already in the project and does
+nothing while `distribute` is `git`.
+
+To publish to PyPI instead, set `distribute = "pypi"` under `[tool.haywire.marketstall]`
+in the root `pyproject.toml` and follow
+[docs/guides/publish-to-pypi.md](https://github.com/going-haywire/haywire/blob/master/docs/guides/publish-to-pypi.md).
+The first PyPI release: a pending publisher does not make the name exist (PyPI answers 404),
+so a plain `share` stops with `STOP: human needed` and a checklist for the owner. Once the
+owner confirms they did it, run `uv run --frozen haywire share --first-release`; it tags the
+current version and CI uploads it. Agents never tag or push tags by hand. From then on use
+`share --bump patch` for every release.
+
+## This repo
+
+- `haybale_stream` under `barn/haybale-stream/` wraps NDI, OMT, Syphon and Spout as haywire
+  types, nodes, widgets and renderers.
+- The default branch is `main`.
+- Setup, running and sharing commands are in [README.md](README.md); don't duplicate them here.
+- Follow the framework's reactive-props and DI patterns: no singletons or alternate
+  registration paths; confirm before any change to class hierarchies or DI wiring.
