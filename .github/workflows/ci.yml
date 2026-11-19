@@ -1,0 +1,26 @@
+# Lint and tests against core's master, on every pull request and on main.
+# The steps live in the org's reusable workflow (going-haywire/.github); a draft PR runs
+# on Linux only, a ready one adds macOS. A newer push cancels an older run on the branch.
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: going-haywire/.github/.github/workflows/library-ci.yml@df1b6ec41026e7706408486d4ac628ec8236a528 # 2026-11-18, going-haywire/.github#2
+    with:
+      # NDI/OMT discovery needs a local network with mDNS, which a runner lacks. No spaces:
+      # the reusable workflow splits these arguments on whitespace.
+      pytest-args: -q --maxfail=0 -m not(network)
