@@ -801,7 +801,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "pytest" },
+    { name = "pytest", specifier = ">=8" },
     { name = "pytest-timeout" },
     { name = "ruff", specifier = "==0.12.12" },
 ]
