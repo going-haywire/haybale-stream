@@ -16,8 +16,8 @@ dependencies = [
     "syphon-python>=0.2.0; sys_platform == 'darwin'",
     "haybale-core>=0.6.0",
     "nicegui",
-    "pyobjc-framework-Cocoa",
-    "pyobjc-framework-Metal",
+    "pyobjc-framework-Cocoa; sys_platform == 'darwin'",
+    "pyobjc-framework-Metal; sys_platform == 'darwin'",
 ]
 description = "Share video frames between applications over Syphon, Spout, NDI and OMT, and audio over OMT"
 keywords = ["video", "audio", "streaming", "syphon", "spout", "ndi", "omt", "texture sharing"]

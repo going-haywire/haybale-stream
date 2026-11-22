@@ -745,8 +745,8 @@ dependencies = [
     { name = "haywire-core" },
     { name = "nicegui" },
     { name = "numpy" },
-    { name = "pyobjc-framework-cocoa" },
-    { name = "pyobjc-framework-metal" },
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-metal", marker = "sys_platform == 'darwin'" },
     { name = "spoutgl", marker = "sys_platform == 'win32'" },
     { name = "syphon-python", marker = "sys_platform == 'darwin'" },
 ]
@@ -761,8 +761,8 @@ requires-dist = [
     { name = "haywire-core", editable = "../haywire-repo/packages/haywire-core" },
     { name = "nicegui" },
     { name = "numpy" },
-    { name = "pyobjc-framework-cocoa" },
-    { name = "pyobjc-framework-metal" },
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-metal", marker = "sys_platform == 'darwin'" },
     { name = "spoutgl", marker = "sys_platform == 'win32'", specifier = ">=0.1.1" },
     { name = "syphon-python", marker = "sys_platform == 'darwin'", specifier = ">=0.2.0" },
 ]
