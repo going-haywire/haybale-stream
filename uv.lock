@@ -734,7 +734,7 @@ requires-dist = [
 
 [[package]]
 name = "haybale-stream"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "barn/haybale-stream" }
 dependencies = [
     { name = "cyndilib" },
@@ -745,6 +745,8 @@ dependencies = [
     { name = "haywire-core" },
     { name = "nicegui" },
     { name = "numpy" },
+    { name = "pyobjc-framework-cocoa" },
+    { name = "pyobjc-framework-metal" },
     { name = "spoutgl", marker = "sys_platform == 'win32'" },
     { name = "syphon-python", marker = "sys_platform == 'darwin'" },
 ]
@@ -759,6 +761,8 @@ requires-dist = [
     { name = "haywire-core", editable = "../haywire-repo/packages/haywire-core" },
     { name = "nicegui" },
     { name = "numpy" },
+    { name = "pyobjc-framework-cocoa" },
+    { name = "pyobjc-framework-metal" },
     { name = "spoutgl", marker = "sys_platform == 'win32'", specifier = ">=0.1.1" },
     { name = "syphon-python", marker = "sys_platform == 'darwin'", specifier = ">=0.2.0" },
 ]
