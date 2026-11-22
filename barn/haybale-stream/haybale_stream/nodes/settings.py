@@ -1,6 +1,6 @@
 """Settings shared by the stream nodes."""
 
-from haywire.api import BOOL, CHOICES, FLOAT, INT, STRING, NodeSettings, SelectWidget, setting
+from haywire.api import BOOL, CHOICES, FLOAT, INT, STRING, MenuWidget, NodeSettings, setting
 
 from ..backends import BACKENDS, audio_backends, available_backends
 from ..backends.sources import all_known_sources, find_sources, known_sources
@@ -90,7 +90,7 @@ class ReceiveSettings(NodeSettings):
         label="Source",
         category="Stream",
         description="Name of the sender to receive from; refresh to look for senders, or type it",
-        widget=SelectWidget.config(
+        widget=MenuWidget.config(
             properties={
                 "options": source_options,
                 "refresh": find_source_options,
@@ -152,7 +152,7 @@ class AudioReceiveSettings(NodeSettings):
         label="Source",
         category="Stream",
         description="Name of the sender to receive from; refresh to look for senders, or type it",
-        widget=SelectWidget.config(
+        widget=MenuWidget.config(
             properties={
                 "options": audio_source_options,
                 "refresh": find_audio_source_options,

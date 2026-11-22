@@ -10,7 +10,7 @@ Receives audio from an OMT source on its own thread and emits a callback per blo
 |---|---|---|---|
 | `start` | inlet | `haywire-core:type:EXEC` | Signal for controlling execution flow between nodes |
 | `stop` | inlet | `haywire-core:type:EXEC` | Signal for controlling execution flow between nodes |
-| `callbacks` | inlet | `haybale-core:type:PooledType` | Connect to Audio Event nodes |
+| `callbacks` | inlet | `haybale-core:type:POOLED` | Connect to Audio Event nodes |
 | `status` | config | `haywire-core:type:STRING` | Text data |
 | `started` | outlet | `haywire-core:type:EXEC` | Signal for controlling execution flow between nodes |
 | `stopped` | outlet | `haywire-core:type:EXEC` | Signal for controlling execution flow between nodes |
@@ -38,7 +38,7 @@ Begin Play → Receive Audio Emit ⇢ Audio Event → Device Out
 Inputs:
     start: Begin receiving
     stop: Stop receiving
-    callbacks: Pooled CALLBACK_AUDIO subscriptions from Audio Event nodes
+    callbacks: Pooled AUDIO_CALLBACK subscriptions from Audio Event nodes
 
 Outputs:
     started / stopped: Control flow after the receiver starts or stops

@@ -3,7 +3,7 @@
 import threading
 import time
 
-from haywire.api import EXEC, STRING, BaseNode, ExecutionContext, NodeType, SimpleLabelWidget, bag, node
+from haywire.api import EXEC, STRING, BaseNode, ExecutionContext, LabelWidget, NodeType, bag, node
 
 from ..backends import get_backend
 from ..backends.base import BackendUnavailable
@@ -45,19 +45,17 @@ class ReceiveFrameEmitNode(BaseNode):
     stream = bag(ReceiveSettings)
 
     def init(self) -> None:
-        from haybale_core.types import PooledType
-        from haybale_image.types.callback import CALLBACK_IMAGE
+        from haybale_core.types import POOLED
+        from haybale_image.types.callback import IMAGE_CALLBACK
 
         self.add(EXEC.as_inlet("start", label="Start"))
         self.add(EXEC.as_inlet("stop", label="Stop"))
         self.add(
-            PooledType[CALLBACK_IMAGE].as_inlet(
+            POOLED[IMAGE_CALLBACK].as_inlet(
                 "callbacks", label="Subscribers", description="Connect to Image Event nodes"
             )
         )
-        self.add(
-            STRING.as_config("status", default="Idle", label="Status", widget=SimpleLabelWidget.config())
-        )
+        self.add(STRING.as_config("status", default="Idle", label="Status", widget=LabelWidget.config()))
         self.add(EXEC.as_outlet("started", label="Started"))
         self.add(EXEC.as_outlet("stopped", label="Stopped"))
 

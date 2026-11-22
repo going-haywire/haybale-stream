@@ -11,7 +11,7 @@ Receives the newest image from another application over NDI, OMT, Syphon or Spou
 | `exec` | inlet | `haywire-core:type:EXEC` | Fetches the newest frame |
 | `frame` | outlet | `haywire-core:type:EXEC` | A new frame arrived |
 | `none` | outlet | `haywire-core:type:EXEC` | No new frame |
-| `image` | outlet | `haybale-image:type:IMAGE_RGBA` | The newest frame received |
+| `image` | outlet | `haybale-image:type:RGBA_IMAGE` | The newest frame received |
 
 ## Settings
 
