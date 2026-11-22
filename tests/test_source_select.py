@@ -1,11 +1,11 @@
-"""The Source dropdown on core's SelectWidget: the refresh button runs the query with the field's settings bag."""
+"""The Source dropdown on core's MenuWidget: the refresh button runs the query with the field's settings bag."""
 
 import asyncio
 from typing import Any, cast
 
 import pytest
 from haybale_stream.nodes.settings import ReceiveSettings
-from haywire.barn.builtin.widgets import SelectWidget
+from haywire.barn.builtin.widgets import MenuWidget
 from haywire.core.settings import SettingsRegistry
 from haywire.ui.panel.setting_widget_model import SettingWidgetModel
 from nicegui import Client, run
@@ -18,7 +18,7 @@ def _noop_page() -> None:  # registration target for a headless Client
 
 
 def _rendered(properties: dict[str, Any], bag: Any = None):
-    """A SelectWidget on ``bag``'s Source cell, given the bag as the settings panel gives it."""
+    """A MenuWidget on ``bag``'s Source cell, given the bag as the settings panel gives it."""
     bag = bag if bag is not None else ReceiveSettings(registry=SettingsRegistry())
     cell = bag._cell_for(type(bag)._settings_descriptors()["source"])
     model = SettingWidgetModel(
@@ -28,7 +28,7 @@ def _rendered(properties: dict[str, Any], bag: Any = None):
         on_edit=cell.set_value,
         settings=bag,
     )
-    widget = SelectWidget(model)
+    widget = MenuWidget(model)
     client = Client(cast(Any, _noop_page), request=None)
     with client:
         widget.render()
@@ -87,4 +87,4 @@ def test_the_source_setting_resolves_to_the_registered_widget(library_system):
     from haywire.ui.widget.globals import get_widget_class
 
     descriptor = ReceiveSettings._settings_descriptors()["source"]
-    assert get_widget_class(descriptor.widget_key).__name__ == "SelectWidget"
+    assert get_widget_class(descriptor.widget_key).__name__ == "MenuWidget"

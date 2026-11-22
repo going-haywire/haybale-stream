@@ -4,9 +4,9 @@ version = "0.2.0"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "haybale-audio>=0.4.1",
-    "haybale-image>=0.3.4",
-    "haywire-core>=0.5.0",
+    "haybale-audio>=0.6.0",
+    "haybale-image>=0.6.0",
+    "haywire-core>=0.6.0",
     "numpy",
     # NDI and OMT wheels bundle their native libraries on Linux, macOS and Windows.
     "cyndilib>=0.1.3",
@@ -14,7 +14,7 @@ dependencies = [
     # Platform backends: wheels exist for one OS only, so the marker is the gate.
     "SpoutGL>=0.1.1; sys_platform == 'win32'",
     "syphon-python>=0.2.0; sys_platform == 'darwin'",
-    "haybale-core",
+    "haybale-core>=0.6.0",
     "nicegui",
 ]
 description = "Share video frames between applications over Syphon, Spout, NDI and OMT, and audio over OMT"

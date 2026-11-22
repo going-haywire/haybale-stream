@@ -4,7 +4,7 @@ import threading
 import time
 
 from haybale_audio.emitter import deliver_to_subscribers, set_status
-from haywire.api import EXEC, STRING, BaseNode, ExecutionContext, NodeType, SimpleLabelWidget, bag, node
+from haywire.api import EXEC, STRING, BaseNode, ExecutionContext, LabelWidget, NodeType, bag, node
 
 from ..backends import get_backend
 from ..backends.audio_convert import packet_to_block
@@ -38,7 +38,7 @@ class ReceiveAudioEmitNode(BaseNode):
     Inputs:
         start: Begin receiving
         stop: Stop receiving
-        callbacks: Pooled CALLBACK_AUDIO subscriptions from Audio Event nodes
+        callbacks: Pooled AUDIO_CALLBACK subscriptions from Audio Event nodes
 
     Outputs:
         started / stopped: Control flow after the receiver starts or stops
@@ -47,19 +47,17 @@ class ReceiveAudioEmitNode(BaseNode):
     stream = bag(AudioReceiveSettings)
 
     def init(self) -> None:
-        from haybale_audio.types.callback import CALLBACK_AUDIO
-        from haybale_core.types import PooledType
+        from haybale_audio.types.callback import AUDIO_CALLBACK
+        from haybale_core.types import POOLED
 
         self.add(EXEC.as_inlet("start", label="Start"))
         self.add(EXEC.as_inlet("stop", label="Stop"))
         self.add(
-            PooledType[CALLBACK_AUDIO].as_inlet(
+            POOLED[AUDIO_CALLBACK].as_inlet(
                 "callbacks", label="Subscribers", description="Connect to Audio Event nodes"
             )
         )
-        self.add(
-            STRING.as_config("status", default="Idle", label="Status", widget=SimpleLabelWidget.config())
-        )
+        self.add(STRING.as_config("status", default="Idle", label="Status", widget=LabelWidget.config()))
         self.add(EXEC.as_outlet("started", label="Started"))
         self.add(EXEC.as_outlet("stopped", label="Stopped"))
 

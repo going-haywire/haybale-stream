@@ -199,13 +199,13 @@ def test_audio_port_layouts(library_system):
 
 
 def test_send_audio_flow_pins_are_audio_exec_and_stop_is_plain_exec(library_system):
-    from haybale_audio.types.exec_audio import EXEC_AUDIO
+    from haybale_audio.types.audio_exec import AUDIO_EXEC
     from haybale_stream.nodes import SendAudioNode
     from haywire.barn.builtin.types import EXEC
 
     send = _build(SendAudioNode)
-    assert send.ports["write"].type_cls is EXEC_AUDIO
-    assert send.ports["next"].type_cls is EXEC_AUDIO
+    assert send.ports["write"].type_cls is AUDIO_EXEC
+    assert send.ports["next"].type_cls is AUDIO_EXEC
     assert send.ports["stop"].type_cls is EXEC
 
 

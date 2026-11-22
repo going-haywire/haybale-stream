@@ -45,7 +45,7 @@ frame, so the NDI receiver tells a new frame from a repeat by timestamp.
 ## Image types
 
 Nodes use `IMAGE` from `haybale-image` (any layout). Send accepts any layout (gray/RGB get
-opaque alpha). Receive emits `IMAGE_RGBA`, which `haybale-image`'s adapters turn into
+opaque alpha). Receive emits `RGBA_IMAGE`, which `haybale-image`'s adapters turn into
 gray/RGB on demand. `haybale-visiongraph` has its own `RGB_FRAME`/`GRAY_FRAME` and no
 `IMAGE` bridge yet — see "Proposed changes to other repos" in the report; nothing here
 depends on it.
@@ -111,7 +111,7 @@ Windows wheels of the dependencies. Consequences:
 - **Send Frame** (CONTROL): inlets `image`, settings `backend`, `name`, `steady stream`, `frame rate`.
   Opens the sender on first frame, reopens if backend/name change, closes on shutdown.
 - **Receive Frame** (CONTROL): settings `backend`, `source` (dropdown of discovered sources,
-  refreshed on open), outlets `image` (IMAGE_RGBA), `received` exec / `none` exec paths.
+  refreshed on open), outlets `image` (RGBA_IMAGE), `received` exec / `none` exec paths.
   Keeps the last image when no new frame arrived.
 
 Both report a clear error on an unavailable backend instead of failing at import.

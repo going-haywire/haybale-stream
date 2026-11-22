@@ -10,7 +10,7 @@ Receives frames from NDI, OMT, Syphon or Spout on its own thread and emits a cal
 |---|---|---|---|
 | `start` | inlet | `haywire-core:type:EXEC` | Signal for controlling execution flow between nodes |
 | `stop` | inlet | `haywire-core:type:EXEC` | Signal for controlling execution flow between nodes |
-| `callbacks` | inlet | `haybale-core:type:PooledType` | Connect to Image Event nodes |
+| `callbacks` | inlet | `haybale-core:type:POOLED` | Connect to Image Event nodes |
 | `status` | config | `haywire-core:type:STRING` | Text data |
 | `started` | outlet | `haywire-core:type:EXEC` | Signal for controlling execution flow between nodes |
 | `stopped` | outlet | `haywire-core:type:EXEC` | Signal for controlling execution flow between nodes |

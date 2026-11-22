@@ -43,12 +43,12 @@ class ReceiveFrameNode(BaseNode):
     stream = bag(ReceiveSettings)
 
     def init(self) -> None:
-        from haybale_image.types.image import IMAGE_RGBA
+        from haybale_image.types.image import RGBA_IMAGE
 
         self.add(EXEC.as_inlet("exec", label="Execute", description="Fetches the newest frame"))
         self.add(EXEC.as_outlet("frame", label="Frame", description="A new frame arrived"))
         self.add(EXEC.as_outlet("none", label="No frame", description="No new frame"))
-        self.add(IMAGE_RGBA.as_outlet("image", label="Image", description="The newest frame received"))
+        self.add(RGBA_IMAGE.as_outlet("image", label="Image", description="The newest frame received"))
 
     def post_init(self) -> None:
         self.hb_receiver: Receiver | None = None
