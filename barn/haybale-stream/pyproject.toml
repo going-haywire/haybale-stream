@@ -7,7 +7,8 @@ dependencies = [
     "haybale-audio>=0.6.0",
     "haybale-image>=0.6.0",
     "haywire-core>=0.6.0",
-    "numpy",
+    # 2.0: opencv-contrib-python, which haybale-image needs at its floor, requires numpy>=2.
+    "numpy>=2.0",
     # NDI and OMT wheels bundle their native libraries on Linux, macOS and Windows.
     "cyndilib>=0.1.3",
     "cyomtlib>=0.1.2",
@@ -15,9 +16,11 @@ dependencies = [
     "SpoutGL>=0.1.1; sys_platform == 'win32'",
     "syphon-python>=0.2.0; sys_platform == 'darwin'",
     "haybale-core>=0.6.0",
-    "nicegui",
-    "pyobjc-framework-Cocoa; sys_platform == 'darwin'",
-    "pyobjc-framework-Metal; sys_platform == 'darwin'",
+    "nicegui>=3.18.0",
+    # 12.2.2: what syphon-python 0.2.0 requires (~=12.2.2); macOS only, so the Linux
+    # floors job does not install it.
+    "pyobjc-framework-Cocoa>=12.2.2; sys_platform == 'darwin'",
+    "pyobjc-framework-Metal>=12.2.2; sys_platform == 'darwin'",
 ]
 description = "Share video frames between applications over Syphon, Spout, NDI and OMT, and audio over OMT"
 keywords = ["video", "audio", "streaming", "syphon", "spout", "ndi", "omt", "texture sharing"]

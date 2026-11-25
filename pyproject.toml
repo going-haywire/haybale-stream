@@ -5,7 +5,7 @@ requires-python = ">=3.12"
 dependencies = ["haywire-studio>=0.6.0", "haybale-marketplace>=0.6.0", "haybale-stream", "haybale-core>=0.6.0", "haybale-image>=0.6.0", "haybale-studio>=0.6.0", "haybale-share>=0.6.0", "haybale-graph-editor>=0.6.0", "haybale-haystack>=0.6.0"]
 
 [dependency-groups]
-dev = ["pytest>=8", "pytest-timeout", "ruff==0.12.12"]
+dev = ["pytest>=8", "pytest-timeout>=2.0.1", "ruff==0.12.12"]
 
 [tool.uv.workspace]
 members = [ "barn/*",]
