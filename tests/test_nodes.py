@@ -157,7 +157,8 @@ def test_emit_node_delivers_frames_to_subscribers(library_system):
     emit.value = lambda port: {"a": SimpleNamespace(name="listener-1")} if port == "callbacks" else None
     emitted = []
     context = SimpleNamespace(
-        control_pin="start", emit_callback=lambda event_name, payload: emitted.append((event_name, payload))
+        control_pin="start",
+        emit_callback=lambda event_name, payload, backlog=None: emitted.append((event_name, payload)),
     )
     image = _solid(32, 24, (10, 200, 10))
     try:
