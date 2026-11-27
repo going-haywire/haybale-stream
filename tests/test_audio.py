@@ -281,13 +281,15 @@ def test_receive_emit_delivers_one_block_per_packet_and_joins_on_stop(library_sy
     receiver = _FakeReceiver(packets)
     monkeypatch.setattr(OMTBackend, "create_audio_receiver", classmethod(lambda cls, source: receiver))
 
-    emitted: list[tuple[str, dict]] = []
+    emitted: list[tuple[list[str], dict]] = []
 
     class Ctx:
         control_pin = "start"
 
-        def emit_callback(self, event_name, payload):
-            emitted.append((event_name, payload))
+        def emit_callback(self, event_name, payload, backlog=None):
+            # haywire 0.6.5 emits once per subscriber name; later cores pass every name in one list.
+            names = event_name if isinstance(event_name, list) else [event_name]
+            emitted.append((names, payload))
 
     class Sub:
         name = "listener"
@@ -308,7 +310,7 @@ def test_receive_emit_delivers_one_block_per_packet_and_joins_on_stop(library_sy
     assert thread is not None and not thread.is_alive() and receiver.closed
 
     payloads = [p for _, p in emitted]
-    assert {name for name, _ in emitted} == {"listener"}
+    assert all(names == ["listener"] for names, _ in emitted)
     assert [p["block_number"] for p in payloads] == [0, 1, 2, 3]
     assert [p["audio"].frames for p in payloads] == [480, 480, 480, 441]
     assert [round(p["timestamp"], 4) for p in payloads[:3]] == [
